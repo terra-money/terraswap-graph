@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# environment variables file
+.env
+*.envrc
+
+# typeorm
+*ormconfig*
+
+*.DS_Store
