@@ -29,7 +29,13 @@ export async function collect(): Promise<void> {
       console.log(err)
     })
     if (!blocks) return
-    const exchangeRate = await oracleExchangeRate()
+
+    const exchangeRate = await oracleExchangeRate(endblock - (endblock % 100)).catch(
+      async (err) => {
+        console.log(err)
+      }
+    )
+    if (!exchangeRate) return
 
     await getManager().transaction(async (manager: EntityManager) => {
       console.log(i)

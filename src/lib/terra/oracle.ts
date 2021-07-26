@@ -1,32 +1,28 @@
-import { gql } from 'graphql-request'
-import { mantle } from './mantle'
+import { delay } from 'bluebird'
+import fetch from 'node-fetch'
+import { ExchangeRate } from 'types'
 
-interface ExchangeRate {
-  Height: string
-  Result: {
-    Denom: string
-    Amount: string
-  }[]
+async function getFromLCD(leftover: string, baseURL = 'https://lcd.terra.dev/') {
+  let getted = false
+  while (!getted) {
+    try {
+      const res = await fetch(baseURL + leftover, {
+        headers: {
+          accept: 'application/json',
+        },
+      }).catch()
+      getted = true
+      return res.json()
+    } catch (error) {
+      console.log(error)
+      delay(1000)
+    }
+  }
 }
 
-export async function oracleExchangeRate(): Promise<ExchangeRate | undefined> {
-  const response = await mantle.request(
-    gql`
-      query {
-        OracleDenomsExchangeRates {
-          Height
-          Result {
-            Amount
-            Denom
-          }
-        }
-      }
-    `
-  )
-  if (!response?.OracleDenomsExchangeRates?.Result) {
-    return undefined
-  }
-  return response.OracleDenomsExchangeRates
+export async function oracleExchangeRate(block: number): Promise<ExchangeRate> {
+  const res = await getFromLCD('oracle/denoms/exchange_rates?height=' + block.toString())
+  return res
 }
 
 export async function exchangeRateToUST(
@@ -34,9 +30,9 @@ export async function exchangeRateToUST(
   exchangeRate: ExchangeRate | undefined
 ): Promise<string | undefined> {
   if (!exchangeRate) return
-  if (denom === 'uluna') return exchangeRate.Result.filter((e) => e.Denom === 'uusd')[0].Amount
+  if (denom === 'uluna') return exchangeRate.result.filter((e) => e.denom === 'uusd')[0].amount
   if (denom === 'uusd') return '1'
-  const uusdRate = exchangeRate.Result.filter((e) => e.Denom === 'uusd')[0].Amount
-  const targetDenomRate = exchangeRate.Result.filter((e) => e.Denom === denom)[0].Amount
+  const uusdRate = exchangeRate.result.filter((e) => e.denom === 'uusd')[0].amount
+  const targetDenomRate = exchangeRate.result.filter((e) => e.denom === denom)[0].amount
   return (Number(uusdRate) / Number(targetDenomRate)).toString()
 }

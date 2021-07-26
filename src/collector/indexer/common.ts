@@ -2,6 +2,7 @@ import { EntityManager, Brackets } from 'typeorm'
 import { isNative } from 'lib/utils'
 import { exchangeRateToUST } from 'lib/terra'
 import { ExchangeRateEntity, PairInfoEntity, TokenInfoEntity } from 'orm'
+import { ExchangeRate } from 'types'
 
 interface UstPrice {
   price: string
