@@ -51,3 +51,9 @@ export function liquidityCompare(liquidity0: string, liquidity1: string): boolea
   if (liquidity1 === 'native') return false
   return Number(liquidity0) > Number(liquidity1)
 }
+
+export function addressMatch(value: string, addressList: string[]): boolean {
+  for (const address of addressList) {
+    if (address == value) return true
+  }
+}

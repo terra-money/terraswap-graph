@@ -1,6 +1,6 @@
 import { EntityManager, getManager } from 'typeorm'
 import { delay } from 'bluebird'
-import { getBlock, getLatestBlock } from 'lib/terra'
+import { getBlock, getLatestBlock, oracleExchangeRate } from 'lib/terra'
 import { getCollectedBlock, updateBlock } from './block'
 import { runIndexers } from './indexer'
 import { delete24hData } from './deleteOldData'
@@ -29,12 +29,13 @@ export async function collect(): Promise<void> {
       console.log(err)
     })
     if (!blocks) return
+    const exchangeRate = await oracleExchangeRate()
 
     await getManager().transaction(async (manager: EntityManager) => {
       console.log(i)
       for (const block of blocks) {
         if (block.Txs[0] != undefined) {
-          await runIndexers(manager, block)
+          await runIndexers(manager, block, exchangeRate)
           await updateBlock(collectedBlock, block.Txs[0].Height, manager.getRepository(BlockEntity))
         }
       }

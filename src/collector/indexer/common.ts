@@ -12,10 +12,11 @@ interface UstPrice {
 export async function tokenPriceAsUST(
   manager: EntityManager,
   token: string,
-  timestamp: Date
+  timestamp: Date,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<UstPrice> {
   if (token !== 'uluna' && isNative(token))
-    return { price: await exchangeRateToUST(token), liquidity: 'native' }
+    return { price: await exchangeRateToUST(token, exchangeRate), liquidity: 'native' }
 
   const ExchangeRates = await manager
     .createQueryBuilder()

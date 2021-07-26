@@ -8,7 +8,7 @@ import {
   TerraswapDayDataEntity,
 } from 'orm'
 import { liquidityCompare, numberToDate } from 'lib/utils'
-import { Cycle, Asset } from 'types'
+import { Cycle, Asset, ExchangeRate } from 'types'
 import { tokenPriceAsUST } from './common'
 
 interface Reserve {
@@ -80,18 +80,21 @@ export function addingReserve(reserve: Reserve, transformedAsset: Asset): Reserv
 export async function liquidityUST(
   manager: EntityManager,
   tokenReserve: Reserve,
-  timestamp: number
+  timestamp: number,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
   const token0Price = await tokenPriceAsUST(
     manager,
     tokenReserve.token0,
-    new Date(timestamp * 1000)
+    new Date(timestamp * 1000),
+    exchangeRate
   )
 
   const token1Price = await tokenPriceAsUST(
     manager,
     tokenReserve.token1,
-    new Date(timestamp * 1000)
+    new Date(timestamp * 1000),
+    exchangeRate
   )
 
   return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
@@ -163,16 +166,18 @@ export async function updateReserves(
 }
 
 export async function updateTotalLiquidity(
-  manager: EntityManager,
-  timestamp: number
+  manager: EntityManager
 ): Promise<TerraswapDayDataEntity | void> {
   const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
-  const date = numberToDate(timestamp, Cycle.day)
+  const lastData = await terraswapRepo.findOne({ order: { timestamp: 'DESC' } })
+  if (!lastData) return
+
+  const timestamp = lastData.timestamp
   const liquidities = await manager
     .createQueryBuilder()
     .select('liquidity_ust')
     .from(PairDayDataEntity, 'pair')
-    .where('pair.timestamp <= :timestamp', { timestamp: new Date(timestamp * 1000) })
+    .where('pair.timestamp <= :timestamp', { timestamp: timestamp })
     .distinctOn(['pair.pair'])
     .orderBy('pair.pair')
     .addOrderBy('pair.timestamp', 'DESC')
@@ -183,10 +188,6 @@ export async function updateTotalLiquidity(
   for (const liquidity of liquidities) {
     sum += Number(liquidity.liquidity_ust)
   }
-
-  const lastData = await terraswapRepo.findOne({ where: [{ timestamp: date }] })
-
-  if (!lastData) return
 
   lastData.total_liquidity_ust = sum.toString()
   return terraswapRepo.save(lastData)

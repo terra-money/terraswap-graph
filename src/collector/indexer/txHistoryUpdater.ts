@@ -8,7 +8,7 @@ import {
   TxHistoryEntity,
   Recent24hEntity,
 } from 'orm'
-import { Cycle, TxHistoryTransformed } from 'types'
+import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
 import { addMinus, numberToDate, tokenOrderedWell } from 'lib/utils'
 import { tokenPriceAsUST } from './common'
 
@@ -25,18 +25,20 @@ export async function updateTxns(
 
 export async function updateVolume(
   manager: EntityManager,
-  transformed: TxHistoryTransformed
+  transformed: TxHistoryTransformed,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   console.log('updating volumne on pair_hour, pair_day, terraswa_day')
-  await updatePairVolume(Cycle.hour, manager, transformed)
-  await updatePairVolume(Cycle.day, manager, transformed)
-  await updateTerraswapVolume(manager, transformed)
+  await updatePairVolume(Cycle.hour, manager, transformed, exchangeRate)
+  await updatePairVolume(Cycle.day, manager, transformed, exchangeRate)
+  await updateTerraswapVolume(manager, transformed, exchangeRate)
 }
 
 export async function updateVolume24h(
   manager: EntityManager,
   transformed: TxHistoryTransformed,
-  timestamp: number
+  timestamp: number,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const recent24hRepo = manager.getRepository(Recent24hEntity)
 
@@ -53,7 +55,7 @@ export async function updateVolume24h(
       token_1_volume: isRightOrder
         ? Math.abs(Number(transformed.assets[1].amount)).toString()
         : Math.abs(Number(transformed.assets[0].amount)).toString(),
-      volume_ust: await volumeToUST(manager, new Date(timestamp * 1000), transformed),
+      volume_ust: await volumeToUST(manager, new Date(timestamp * 1000), transformed, exchangeRate),
     })
   )
 }
@@ -214,7 +216,8 @@ async function updateOrAddTxnsForTerraswap(
 async function updatePairVolume(
   cycle: Cycle,
   manager: EntityManager,
-  transformed: TxHistoryTransformed
+  transformed: TxHistoryTransformed,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
     cycle === Cycle.hour ? PairHourDataEntity : PairDayDataEntity
@@ -242,7 +245,7 @@ async function updatePairVolume(
     Math.abs(Number(isRightOrder ? transformed.assets[1].amount : transformed.assets[0].amount))
   ).toString()
 
-  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed)
+  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
 
   lastData.volume_ust = (Number(lastData.volume_ust) + Number(newVolumeUST)).toString()
 
@@ -252,11 +255,22 @@ async function updatePairVolume(
 async function volumeToUST(
   manager: EntityManager,
   timestamp: Date,
-  transformed: TxHistoryTransformed
+  transformed: TxHistoryTransformed,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
-  const token0Price = await tokenPriceAsUST(manager, transformed.assets[0].token, timestamp)
+  const token0Price = await tokenPriceAsUST(
+    manager,
+    transformed.assets[0].token,
+    timestamp,
+    exchangeRate
+  )
 
-  const token1Price = await tokenPriceAsUST(manager, transformed.assets[1].token, timestamp)
+  const token1Price = await tokenPriceAsUST(
+    manager,
+    transformed.assets[1].token,
+    timestamp,
+    exchangeRate
+  )
 
   return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
     ? Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
@@ -271,7 +285,8 @@ async function liquidityCompare(liquidity0: string, liquidity1: string) {
 
 async function updateTerraswapVolume(
   manager: EntityManager,
-  transformed: TxHistoryTransformed
+  transformed: TxHistoryTransformed,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<TerraswapDayDataEntity | void> {
   const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
 
@@ -281,7 +296,7 @@ async function updateTerraswapVolume(
 
   if (!lastData) return
 
-  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed)
+  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
 
   lastData.volume_ust = (Number(lastData.volume_ust) + Number(newVolumeUST)).toString()
 

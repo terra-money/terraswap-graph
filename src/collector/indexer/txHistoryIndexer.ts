@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block, Cycle } from 'types'
+import { Block, Cycle, ExchangeRate } from 'types'
 import {
   updateTxns,
   updateVolume,
@@ -14,7 +14,8 @@ import { createTxHistoryFinders } from '../log-finder'
 export async function TxHistoryIndexer(
   pairAddresses: string[],
   entityManager: EntityManager,
-  block: Block
+  block: Block,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinders = createTxHistoryFinders()
   const Txs = block.Txs
@@ -42,8 +43,8 @@ export async function TxHistoryIndexer(
 
             await updateTxns(timestamp, entityManager, pair) // +1 to txns for pair, terraswap
             if (transformed.action === 'swap') {
-              await updateVolume(entityManager, transformed)
-              await updateVolume24h(entityManager, transformed, timestamp)
+              await updateVolume(entityManager, transformed, exchangeRate)
+              await updateVolume24h(entityManager, transformed, timestamp, exchangeRate)
             } else {
               await updateLpTokenShare(Cycle.day, entityManager, transformed)
               await updateLpTokenShare(Cycle.hour, entityManager, transformed)

@@ -1,5 +1,5 @@
 import { EntityManager } from 'typeorm'
-import { Block, NonnativeTransferTransformed } from 'types'
+import { Block, ExchangeRate, NonnativeTransferTransformed } from 'types'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
 import { addMinus } from 'lib/utils'
@@ -16,7 +16,8 @@ import { createNativeTransferLogFinders, createNonnativeTransferLogFinders } fro
 export async function NativeTransferIndexer(
   pairAddresses: string[],
   entityManager: EntityManager,
-  block: Block
+  block: Block,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinder = createNativeTransferLogFinders()
   const Txs = block.Txs
@@ -56,24 +57,30 @@ export async function NativeTransferIndexer(
 
             const tokenReserve = await latestReserve(entityManager, pair)
             const updatedReserve = addingReserve(tokenReserve, transData.assets)
-            const liquidity = await liquidityUST(entityManager, updatedReserve, timestamp)
+            const liquidity = await liquidityUST(
+              entityManager,
+              updatedReserve,
+              timestamp,
+              exchangeRate
+            )
 
             await updateExchangeRate(entityManager, updatedReserve, liquidity, timestamp, pair)
 
             await updateReserves(entityManager, updatedReserve, liquidity, pair)
-            await updateTotalLiquidity(entityManager, timestamp)
           })
         })
       })
     })
   })
+  await updateTotalLiquidity(entityManager)
 }
 
 export async function NonnativeTransferIndexer(
   pairAddresses: string[],
   tokenAddresses: string[],
   entityManager: EntityManager,
-  block: Block
+  block: Block,
+  exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinders = createNonnativeTransferLogFinders()
   const Txs = block.Txs
@@ -117,7 +124,12 @@ export async function NonnativeTransferIndexer(
 
             const tokenReserve = await latestReserve(entityManager, transferTransformed.pairAddress)
             const updatedReserve = addingReserve(tokenReserve, transferTransformed.assets)
-            const liquidity = await liquidityUST(entityManager, updatedReserve, timestamp)
+            const liquidity = await liquidityUST(
+              entityManager,
+              updatedReserve,
+              timestamp,
+              exchangeRate
+            )
 
             await updateExchangeRate(
               entityManager,
@@ -133,12 +145,12 @@ export async function NonnativeTransferIndexer(
               liquidity,
               transferTransformed.pairAddress
             )
-            await updateTotalLiquidity(entityManager, timestamp)
           })
         })
       })
     })
   })
+  await updateTotalLiquidity(entityManager)
 }
 
 function isPairRelative(
