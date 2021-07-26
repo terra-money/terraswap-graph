@@ -33,9 +33,9 @@
     "ts-node": "^10.1.0",
     "tsconfig-paths": "^3.10.1",
     "type-graphql": "^1.1.1",
-    "typedi": "^0.8.0",
+    "typedi": "^0.10.0",
     "typeorm": "^0.2.34",
-    "typeorm-typedi-extensions": "^0.2.3",
+    "typeorm-typedi-extensions": "^0.4.1",
     "typescript": "^4.3.5"
   },
   "devDependencies": {

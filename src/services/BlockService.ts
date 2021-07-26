@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm'
-import { InjectRepository } from 'typeorm-typedi-extensions'
-import { Container, Service } from 'typedi'
+import { InjectRepository, Container } from 'typeorm-typedi-extensions'
+import { Service } from 'typedi'
 import { BlockEntity } from 'orm'
 
 @Service()

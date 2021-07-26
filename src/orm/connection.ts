@@ -6,7 +6,7 @@ import {
   ConnectionOptionsReader,
   useContainer,
 } from 'typeorm'
-import { Container } from 'typedi'
+import { Container } from 'typeorm-typedi-extensions'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { values } from 'lodash'
 import * as logger from 'lib/logger'
