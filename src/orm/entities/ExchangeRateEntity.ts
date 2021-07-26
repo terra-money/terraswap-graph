@@ -16,23 +16,23 @@ export class ExchangeRateEntity {
   pair: string
 
   @Column()
-  token_0: string
+  token0: string
 
   @Column()
-  token_1: string
+  token1: string
 
   @Column('decimal', { precision: 40, scale: 10 })
-  token_0_price: string
+  token0Price: string
 
   @Column('decimal', { precision: 40, scale: 10 })
-  token_1_price: string
+  token1Price: string
 
   @Column('decimal', { precision: 40 })
-  token_0_reserve: string
+  token0Reserve: string
 
   @Column('decimal', { precision: 40 })
-  token_1_reserve: string
+  token1Reserve: string
 
   @Column('decimal', { precision: 40 })
-  liquidity_ust: string
+  liquidityUst: string
 }

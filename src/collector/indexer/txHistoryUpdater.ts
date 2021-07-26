@@ -47,15 +47,15 @@ export async function updateVolume24h(
     new Recent24hEntity({
       pair: transformed.pair,
       timestamp: new Date(timestamp * 1000),
-      token_0: isRightOrder ? transformed.assets[0].token : transformed.assets[1].token,
-      token_1: isRightOrder ? transformed.assets[1].token : transformed.assets[0].token,
-      token_0_volume: isRightOrder
+      token0: isRightOrder ? transformed.assets[0].token : transformed.assets[1].token,
+      token1: isRightOrder ? transformed.assets[1].token : transformed.assets[0].token,
+      token0Volume: isRightOrder
         ? Math.abs(Number(transformed.assets[0].amount)).toString()
         : Math.abs(Number(transformed.assets[1].amount)).toString(),
-      token_1_volume: isRightOrder
+      token1Volume: isRightOrder
         ? Math.abs(Number(transformed.assets[1].amount)).toString()
         : Math.abs(Number(transformed.assets[0].amount)).toString(),
-      volume_ust: await volumeToUST(manager, new Date(timestamp * 1000), transformed, exchangeRate),
+      volumeUst: await volumeToUST(manager, new Date(timestamp * 1000), transformed, exchangeRate),
     })
   )
 }
@@ -77,10 +77,10 @@ export async function addTxHistory(
     tx_hash: txHash,
     pair: transformed.pair,
     action: transformed.action,
-    token_0: isRightOrder ? transformed.assets[0].token : transformed.assets[1].token,
-    token_0_amount: isRightOrder ? transformed.assets[0].amount : transformed.assets[1].amount,
-    token_1: isRightOrder ? transformed.assets[1].token : transformed.assets[0].token,
-    token_1_amount: isRightOrder ? transformed.assets[1].amount : transformed.assets[0].amount,
+    token0: isRightOrder ? transformed.assets[0].token : transformed.assets[1].token,
+    token0Amount: isRightOrder ? transformed.assets[0].amount : transformed.assets[1].amount,
+    token1: isRightOrder ? transformed.assets[1].token : transformed.assets[0].token,
+    token1Amount: isRightOrder ? transformed.assets[1].amount : transformed.assets[0].amount,
   })
 
   return txHistoryRepo.save(txHistory)
@@ -109,9 +109,7 @@ export async function updateLpTokenShare(
 
   if (!lastData) return
 
-  lastData.total_lp_token_share = (
-    Number(lastData.total_lp_token_share) + Number(shareDiff)
-  ).toString()
+  lastData.totalLpTokenShare = (Number(lastData.totalLpTokenShare) + Number(shareDiff)).toString()
 
   return pairRepo.save(lastData)
 }
@@ -151,15 +149,15 @@ async function updateOrAddTxns(
       const pairData = new PairDayDataEntity({
         timestamp: txTime,
         pair,
-        token_0: pairInfo.token_0,
-        token_0_volume: '0',
-        token_0_reserve: '0',
-        token_1: pairInfo.token_1,
-        token_1_volume: '0',
-        token_1_reserve: '0',
-        total_lp_token_share: '0',
-        volume_ust: '0',
-        liquidity_ust: '0',
+        token0: pairInfo.token0,
+        token0Volume: '0',
+        token0Reserve: '0',
+        token1: pairInfo.token1,
+        token1Volume: '0',
+        token1Reserve: '0',
+        totalLpTokenShare: '0',
+        volumeUst: '0',
+        liquidityUst: '0',
         txns: 1,
       })
 
@@ -168,15 +166,15 @@ async function updateOrAddTxns(
       const pairData = new PairDataEntity({
         timestamp: txTime,
         pair,
-        token_0: lastPairData.token_0,
-        token_0_volume: '0',
-        token_0_reserve: lastPairData.token_0_reserve,
-        token_1: lastPairData.token_1,
-        token_1_volume: '0',
-        token_1_reserve: lastPairData.token_1_reserve,
-        total_lp_token_share: lastPairData.total_lp_token_share,
-        volume_ust: '0',
-        liquidity_ust: lastPairData.liquidity_ust,
+        token0: lastPairData.token0,
+        token0Volume: '0',
+        token0Reserve: lastPairData.token0Reserve,
+        token1: lastPairData.token1,
+        token1Volume: '0',
+        token1Reserve: lastPairData.token1Reserve,
+        totalLpTokenShare: lastPairData.totalLpTokenShare,
+        volumeUst: '0',
+        liquidityUst: lastPairData.liquidityUst,
         txns: 1,
       })
 
@@ -205,8 +203,8 @@ async function updateOrAddTxnsForTerraswap(
   } else {
     const terraswapData = new TerraswapDayDataEntity({
       timestamp: txTime,
-      volume_ust: '0',
-      total_liquidity_ust: lastData === undefined ? '0' : lastData.total_liquidity_ust,
+      volumeUst: '0',
+      totalLiquidityUst: lastData === undefined ? '0' : lastData.totalLiquidityUst,
       txns: 1,
     })
     return terraswapRepo.save(terraswapData)
@@ -235,19 +233,19 @@ async function updatePairVolume(
 
   const isRightOrder = tokenOrderedWell([transformed.assets[0].token, transformed.assets[1].token])
 
-  lastData.token_0_volume = (
-    Number(lastData.token_0_volume) +
+  lastData.token0Volume = (
+    Number(lastData.token0Volume) +
     Math.abs(Number(isRightOrder ? transformed.assets[0].amount : transformed.assets[1].amount))
   ).toString()
 
-  lastData.token_1_volume = (
-    Number(lastData.token_1_volume) +
+  lastData.token1Volume = (
+    Number(lastData.token1Volume) +
     Math.abs(Number(isRightOrder ? transformed.assets[1].amount : transformed.assets[0].amount))
   ).toString()
 
   const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
 
-  lastData.volume_ust = (Number(lastData.volume_ust) + Number(newVolumeUST)).toString()
+  lastData.volumeUst = (Number(lastData.volumeUst) + Number(newVolumeUST)).toString()
 
   return pairRepo.save(lastData)
 }
@@ -298,7 +296,7 @@ async function updateTerraswapVolume(
 
   const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
 
-  lastData.volume_ust = (Number(lastData.volume_ust) + Number(newVolumeUST)).toString()
+  lastData.volumeUst = (Number(lastData.volumeUst) + Number(newVolumeUST)).toString()
 
   return terraswapRepo.save(lastData)
 }

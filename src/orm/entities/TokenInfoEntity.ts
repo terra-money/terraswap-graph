@@ -7,7 +7,7 @@ export class TokenInfoEntity {
   }
 
   @PrimaryColumn()
-  token_address: string
+  tokenAddress: string
 
   @Column()
   symbol: string

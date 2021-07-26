@@ -88,12 +88,12 @@ export async function getPairList(manager: EntityManager): Promise<string[]> {
 
 export async function getTokenList(manager: EntityManager): Promise<string[]> {
   const tokenInforRepo = manager.getRepository(TokenInfoEntity)
-  const tokens = await tokenInforRepo.find({ select: ['token_address'] })
+  const tokens = await tokenInforRepo.find({ select: ['tokenAddress'] })
 
   const tokenList = []
 
   for (const i of tokens) {
-    if (!isNative(i.token_address)) tokenList.push(i.token_address)
+    if (!isNative(i.tokenAddress)) tokenList.push(i.tokenAddress)
   }
 
   return tokenList

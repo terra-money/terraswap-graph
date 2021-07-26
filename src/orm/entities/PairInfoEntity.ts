@@ -10,11 +10,11 @@ export class PairInfoEntity {
   pair: string
 
   @Column()
-  token_0: string
+  token0: string
 
   @Column()
-  token_1: string
+  token1: string
 
   @Column()
-  lp_token: string
+  lpToken: string
 }

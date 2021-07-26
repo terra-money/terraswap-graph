@@ -16,17 +16,17 @@ export class Recent24hEntity {
   timestamp: Date
 
   @Column()
-  token_0: string
+  token0: string
 
   @Column('decimal', { precision: 40 })
-  token_0_volume: string
+  token0Volume: string
 
   @Column()
-  token_1: string
+  token1: string
 
   @Column('decimal', { precision: 40 })
-  token_1_volume: string
+  token1Volume: string
 
   @Column('decimal', { precision: 40 })
-  volume_ust: string
+  volumeUst: string
 }

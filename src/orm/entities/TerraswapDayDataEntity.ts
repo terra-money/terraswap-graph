@@ -13,10 +13,10 @@ export class TerraswapDayDataEntity {
   timestamp: Date
 
   @Column('decimal', { precision: 40 })
-  volume_ust: string
+  volumeUst: string
 
   @Column('decimal', { precision: 40 })
-  total_liquidity_ust: string
+  totalLiquidityUst: string
 
   @Column()
   txns: number

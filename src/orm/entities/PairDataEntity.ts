@@ -16,31 +16,31 @@ export class PairDataEntity {
   pair: string
 
   @Column()
-  token_0: string
+  token0: string
 
   @Column('decimal', { precision: 40 })
-  token_0_volume: string
+  token0Volume: string
 
   @Column('decimal', { precision: 40 })
-  token_0_reserve: string
+  token0Reserve: string
 
   @Column()
-  token_1: string
+  token1: string
 
   @Column('decimal', { precision: 40 })
-  token_1_volume: string
+  token1Volume: string
 
   @Column('decimal', { precision: 40 })
-  token_1_reserve: string
+  token1Reserve: string
 
   @Column('decimal', { precision: 40 })
-  total_lp_token_share: string
+  totalLpTokenShare: string
 
   @Column('decimal', { precision: 40 })
-  volume_ust: string
+  volumeUst: string
 
   @Column('decimal', { precision: 40 })
-  liquidity_ust: string
+  liquidityUst: string
 
   @Column()
   txns: number

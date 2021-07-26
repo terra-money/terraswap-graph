@@ -43,18 +43,18 @@ export async function latestReserve(manager: EntityManager, pair: string): Promi
     }
 
     return {
-      token0: pairInfo.token_0,
+      token0: pairInfo.token0,
       token0Reserve: '0',
-      token1: pairInfo.token_1,
+      token1: pairInfo.token1,
       token1Reserve: '0',
     }
   }
 
   return {
-    token0: recentExchangeRate.token_0,
-    token0Reserve: recentExchangeRate.token_0_reserve,
-    token1: recentExchangeRate.token_1,
-    token1Reserve: recentExchangeRate.token_1_reserve,
+    token0: recentExchangeRate.token0,
+    token0Reserve: recentExchangeRate.token0Reserve,
+    token1: recentExchangeRate.token1,
+    token1Reserve: recentExchangeRate.token1Reserve,
   }
 }
 
@@ -118,38 +118,32 @@ export async function updateExchangeRate(
   })
 
   if (lastRate?.timestamp?.valueOf() === numberToDate(timestamp, Cycle.minute).valueOf()) {
-    lastRate.token_0_price = priceInfiniteToZero(
+    lastRate.token0Price = priceInfiniteToZero(
       updatedReserve.token1Reserve,
       updatedReserve.token0Reserve
     )
 
-    lastRate.token_1_price = priceInfiniteToZero(
+    lastRate.token1Price = priceInfiniteToZero(
       updatedReserve.token0Reserve,
       updatedReserve.token1Reserve
     )
 
-    lastRate.token_0_reserve = updatedReserve.token0Reserve
-    lastRate.token_1_reserve = updatedReserve.token1Reserve
-    lastRate.liquidity_ust = liquidity
+    lastRate.token0Reserve = updatedReserve.token0Reserve
+    lastRate.token1Reserve = updatedReserve.token1Reserve
+    lastRate.liquidityUst = liquidity
 
     return exchangeRateRepo.save(lastRate)
   } else {
     const exchangeRate = new ExchangeRateEntity({
       timestamp: numberToDate(timestamp, Cycle.minute),
       pair: pair,
-      token_0: updatedReserve.token0,
-      token_0_price: priceInfiniteToZero(
-        updatedReserve.token1Reserve,
-        updatedReserve.token0Reserve
-      ),
-      token_0_reserve: updatedReserve.token0Reserve,
-      token_1: updatedReserve.token1,
-      token_1_price: priceInfiniteToZero(
-        updatedReserve.token0Reserve,
-        updatedReserve.token1Reserve
-      ),
-      token_1_reserve: updatedReserve.token1Reserve,
-      liquidity_ust: liquidity,
+      token0: updatedReserve.token0,
+      token0Price: priceInfiniteToZero(updatedReserve.token1Reserve, updatedReserve.token0Reserve),
+      token0Reserve: updatedReserve.token0Reserve,
+      token1: updatedReserve.token1,
+      token1Price: priceInfiniteToZero(updatedReserve.token0Reserve, updatedReserve.token1Reserve),
+      token1Reserve: updatedReserve.token1Reserve,
+      liquidityUst: liquidity,
     })
     return exchangeRateRepo.save(exchangeRate)
   }
@@ -189,7 +183,7 @@ export async function updateTotalLiquidity(
     sum += Number(liquidity.liquidity_ust)
   }
 
-  lastData.total_liquidity_ust = sum.toString()
+  lastData.totalLiquidityUst = sum.toString()
   return terraswapRepo.save(lastData)
 }
 
@@ -213,9 +207,9 @@ async function updateReserve(
 
   if (!lastPairData) return
 
-  lastPairData.token_0_reserve = updatedReserve.token0Reserve
-  lastPairData.token_1_reserve = updatedReserve.token1Reserve
-  lastPairData.liquidity_ust = liquidity
+  lastPairData.token0Reserve = updatedReserve.token0Reserve
+  lastPairData.token1Reserve = updatedReserve.token1Reserve
+  lastPairData.liquidityUst = liquidity
 
   return pairRepo.save(lastPairData)
 }

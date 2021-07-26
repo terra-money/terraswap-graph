@@ -22,7 +22,7 @@ export async function addTokenInfo(
     const tokenInfoFromBlockData = await getTokenInfo(tokenAddress)
 
     const tokenInfo = new TokenInfoEntity({
-      token_address: tokenAddress,
+      tokenAddress,
       symbol: tokenInfoFromBlockData.symbol,
       pairs: [newPair],
       decimals: tokenInfoFromBlockData.decimals,
@@ -52,9 +52,9 @@ export async function addPairInfo(
 
   const pairInfo = new PairInfoEntity({
     pair: transformed.pairAddress,
-    token_0: token0,
-    token_1: token1,
-    lp_token: transformed.lpTokenAddress,
+    token0,
+    token1,
+    lpToken: transformed.lpTokenAddress,
   })
 
   return pairInfoRepo.save(pairInfo)

@@ -23,14 +23,14 @@ export class TxHistoryEntity {
   action: string
 
   @Column()
-  token_0: string
+  token0: string
 
   @Column('decimal', { precision: 40 })
-  token_0_amount: string
+  token0Amount: string
 
   @Column()
-  token_1: string
+  token1: string
 
   @Column('decimal', { precision: 40 })
-  token_1_amount: string
+  token1Amount: string
 }
