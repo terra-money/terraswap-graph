@@ -28,29 +28,5 @@ export function createNonnativeTransferLogFinders(): ReturningLogFinderMapper<No
         },
       }
     }),
-    createReturningLogFinder(logRules.nonnativeSendRuleFrom(), (_, match) => {
-      return {
-        addresses: {
-          from: match[2].value,
-          to: match[3].value,
-        },
-        assets: {
-          token: match[0].value,
-          amount: match[5].value,
-        },
-      }
-    }),
-    createReturningLogFinder(logRules.nonnativeSendRule(), (_, match) => {
-      return {
-        addresses: {
-          from: match[2].value,
-          to: match[3].value,
-        },
-        assets: {
-          token: match[0].value,
-          amount: match[4].value,
-        },
-      }
-    }),
   ]
 }

@@ -1,9 +1,6 @@
-interface rule {
-  type: string
-  attributes: string[][]
-}
+import { LogFinderRule } from '@terra-money/log-finder'
 
-export function createPairRule(factoryAddress: string): rule {
+export function createPairRule(factoryAddress: string): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [
@@ -16,7 +13,7 @@ export function createPairRule(factoryAddress: string): rule {
   }
 }
 
-export function swapRule(): rule {
+export function swapRule(): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [
@@ -33,14 +30,14 @@ export function swapRule(): rule {
   }
 }
 
-export function provideLiquidityRule(): rule {
+export function provideLiquidityRule(): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [['contract_address'], ['action', 'provide_liquidity'], ['assets'], ['share']],
   }
 }
 
-export function withdrawLiquidityRule(): rule {
+export function withdrawLiquidityRule(): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [
@@ -52,26 +49,25 @@ export function withdrawLiquidityRule(): rule {
   }
 }
 
-export function nonnativeTransferRule(): rule {
-  return {
-    type: 'from_contract',
-    attributes: [['contract_address'], ['action', 'transfer'], ['from'], ['to'], ['amount']],
-  }
-}
-
-export function nonnativeSendRule(): rule {
-  return {
-    type: 'from_contract',
-    attributes: [['contract_address'], ['action', 'send'], ['from'], ['to'], ['amount']],
-  }
-}
-
-export function nonnativeTransferRuleFrom(): rule {
+export function nonnativeTransferRule(): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [
       ['contract_address'],
-      ['action', 'transfer_from'],
+      ['action', (value) => value == 'transfer' || value == 'send'],
+      ['from'],
+      ['to'],
+      ['amount'],
+    ],
+  }
+}
+
+export function nonnativeTransferRuleFrom(): LogFinderRule {
+  return {
+    type: 'from_contract',
+    attributes: [
+      ['contract_address'],
+      ['action', (value) => value == 'transfer_from' || value == 'send_from'],
       ['from'],
       ['to'],
       ['by'],
@@ -80,14 +76,7 @@ export function nonnativeTransferRuleFrom(): rule {
   }
 }
 
-export function nonnativeSendRuleFrom(): rule {
-  return {
-    type: 'from_contract',
-    attributes: [['contract_address'], ['action', 'send_from'], ['from'], ['to'], ['amount']],
-  }
-}
-
-export function nativeTransferRule(): rule {
+export function nativeTransferRule(): LogFinderRule {
   return {
     type: 'transfer',
     attributes: [['recipient'], ['sender'], ['amount']],

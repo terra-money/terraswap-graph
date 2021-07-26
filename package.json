@@ -14,7 +14,7 @@
   "dependencies": {
     "@sentry/node": "^6.9.0",
     "@terra-money/hive": "^0.1.0",
-    "@terra-money/log-finder": "^0.1.0",
+    "@terra-money/log-finder": "^1.1.4",
     "@types/eslint": "^7.28.0",
     "bluebird": "^3.7.2",
     "date-fns-timezone": "^0.1.4",
