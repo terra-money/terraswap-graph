@@ -1,6 +1,5 @@
 import 'reflect-metadata'
 import * as bluebird from 'bluebird'
-import { Container } from 'typedi'
 import { initORM } from 'orm'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
@@ -21,14 +20,13 @@ async function loop(): Promise<void> {
 async function main(): Promise<void> {
   logger.info(`Initialize collector, start_block_height: ${config.START_BLOCK_HEIGHT}`)
 
-  initErrorHandler({ sentryDsn: process.env.SENTRY_COLLECTOR })
+  initErrorHandler({ sentryDsn: process.env.SENTRY })
 
   validateConfig()
 
-  await initORM(Container)
+  await initORM()
 
-  logger.info('Initialize mantle')
-  initMantle(config.TERRA_MANTLE)
+  initMantle(process.env.TERRA_MANTLE)
 
   logger.info('Start collecting')
   await loop()

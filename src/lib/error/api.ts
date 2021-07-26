@@ -49,14 +49,14 @@ export class APIError extends Error {
 }
 
 export function apiErrorHandler(
-  callback: (ctx: Koa.Context, type: string, code?: string, message?: string) => void
+  callback: (ctx: Koa.Context, type: string, code?: number, message?: string) => void
 ) {
   return async (ctx: Koa.Context, next: Koa.Next): Promise<void> => {
     try {
       await next()
     } catch (error) {
       if (error instanceof APIError) {
-        callback(ctx, error.type, error.code, error.message)
+        callback(ctx, error.type, +error.code, error.message)
       } else if (error.isJoi) {
         callback(ctx, 'INVALID_REQUEST_ERROR', error.statusCode, error.message)
       } else {

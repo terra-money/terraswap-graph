@@ -4,9 +4,9 @@ import {
   createConnection,
   ConnectionOptions,
   ConnectionOptionsReader,
-  // useContainer,
-  ContainerInterface,
+  useContainer,
 } from 'typeorm'
+import { Container } from 'typedi'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { values } from 'lodash'
 import * as logger from 'lib/logger'
@@ -20,18 +20,13 @@ export const staticOptions = {
 
 let connections: Connection[] = []
 
-function initConnection(
-  options: ConnectionOptions,
-  container: ContainerInterface = undefined
-): Promise<Connection> {
+function initConnection(options: ConnectionOptions): Promise<Connection> {
   const pgOpts = options as PostgresConnectionOptions
   logger.info(
     `Connecting to ${pgOpts.username}@${pgOpts.host}:${pgOpts.port || 5432} (${
       pgOpts.name || 'default'
     })`
   )
-
-  // container && useContainer(container)
 
   return createConnection({
     ...options,
@@ -41,8 +36,10 @@ function initConnection(
   })
 }
 
-export async function initORM(container: ContainerInterface = undefined): Promise<Connection[]> {
+export async function initORM(): Promise<Connection[]> {
   logger.info('Initialize ORM')
+
+  useContainer(Container)
 
   const reader = new ConnectionOptionsReader()
   const options = (await reader.all()).filter((o) => o.name !== 'migration')
@@ -71,9 +68,9 @@ export async function initORM(container: ContainerInterface = undefined): Promis
       },
     }))
 
-    connections = await map(replicaOptions, (opt) => initConnection(opt, container))
+    connections = await map(replicaOptions, (opt) => initConnection(opt))
   } else {
-    connections = await map(options, (opt) => initConnection(opt, container))
+    connections = await map(options, (opt) => initConnection(opt))
   }
 
   return connections
