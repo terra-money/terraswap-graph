@@ -1,8 +1,11 @@
 import { GraphQLClient, gql } from 'graphql-request'
+import * as logger from 'lib/logger'
 
 export let mantle: GraphQLClient
 
 export function initMantle(URL: string): GraphQLClient {
+  logger.info('Initialize mantle')
+
   mantle = new GraphQLClient(URL, {
     timeout: 60000,
     keepalive: true,
