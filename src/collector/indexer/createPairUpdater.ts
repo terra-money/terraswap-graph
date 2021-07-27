@@ -15,7 +15,7 @@ export async function addTokenInfo(
   newPair: string
 ): Promise<TokenInfoEntity> {
   const tokenRepo = manager.getRepository(TokenInfoEntity)
-  const token = await tokenRepo.findOne({ where: [{ token_address: tokenAddress }] })
+  const token = await tokenRepo.findOne({ where: [{ tokenAddress }] })
 
   if (token === undefined) {
     // new one
