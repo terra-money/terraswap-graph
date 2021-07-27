@@ -46,6 +46,11 @@ export function numberToDate(timestamp: number, cycle: number): Date {
   return new Date(timestamp * 1000 - ((timestamp * 1000) % cycle))
 }
 
+export function dateToNumber(timestamp: Date): number {
+  const stringTime = (timestamp.valueOf() / 1000).toFixed(0)
+  return parseInt(stringTime)
+}
+
 export function liquidityCompare(liquidity0: string, liquidity1: string): boolean {
   if (liquidity0 === 'native') return true
   if (liquidity1 === 'native') return false
