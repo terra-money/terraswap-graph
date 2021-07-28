@@ -9,7 +9,7 @@
     "collect": "NODE_ENV=production node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/main.ts",
     "migration-gen": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -c migration -d src/orm/migrations -n",
     "migration-revert": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -c migration",
-    "migration-run": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -c migration -d src/orm/migrations",
+    "migration-run": "node --require ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -c migration",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --fix",
     "test": "npm test"
   },
