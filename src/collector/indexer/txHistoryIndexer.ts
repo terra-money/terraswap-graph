@@ -46,8 +46,8 @@ export async function TxHistoryIndexer(
               await updateVolume(entityManager, transformed, exchangeRate)
               await updateVolume24h(entityManager, transformed, timestamp, exchangeRate)
             } else {
-              await updateLpTokenShare(Cycle.day, entityManager, transformed)
-              await updateLpTokenShare(Cycle.hour, entityManager, transformed)
+              await updateLpTokenShare(Cycle.DAY, entityManager, transformed)
+              await updateLpTokenShare(Cycle.HOUR, entityManager, transformed)
             }
             await addTxHistory(entityManager, timestamp, txHash, transformed)
           })

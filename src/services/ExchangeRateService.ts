@@ -21,8 +21,8 @@ export class ExchangeRateService {
     interval: number,
     repo = this.repo
   ): Promise<void | ExchangeRate> {
-    const fromDate = numberToDate(from, Cycle.minute)
-    const toDate = numberToDate(to, Cycle.minute)
+    const fromDate = numberToDate(from, Cycle.MINUTE)
+    const toDate = numberToDate(to, Cycle.MINUTE)
 
     let newFrom = await repo.findOne({
       select: ['timestamp'],

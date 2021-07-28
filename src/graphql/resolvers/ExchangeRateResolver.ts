@@ -1,6 +1,8 @@
 import { Arg, Query, Resolver } from 'type-graphql'
 import { ExchangeRate } from 'graphql/schema'
 import { ExchangeRateService } from 'services'
+import { rangeLimit } from 'lib/utils'
+import { Cycle } from 'types'
 
 @Resolver((of) => ExchangeRate)
 export class ExchangeRateResolver {
@@ -13,7 +15,7 @@ export class ExchangeRateResolver {
     @Arg('to', { description: 'timestamp second' }) to: number,
     @Arg('interval', { description: 'unit: minute' }) interval: number
   ): Promise<ExchangeRate> {
-    rangeLimit(from, to, interval, 500)
+    rangeLimit(from, to, interval, Cycle.MINUTE, 500)
     const exchangeRate = await this.exchangeRateService.exchangeRate(
       pairAddress,
       from,
@@ -23,9 +25,4 @@ export class ExchangeRateResolver {
     if (!exchangeRate) throw new Error('there are no transactions of this pair')
     return exchangeRate
   }
-}
-
-function rangeLimit(from: number, to: number, interval: number, limit: number) {
-  if ((to - from) / (interval * 60) > limit)
-    throw new Error(`max limit is '${limit}' set your range narrower or set larger interval`)
 }

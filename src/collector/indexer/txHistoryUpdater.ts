@@ -18,8 +18,8 @@ export async function updateTxns(
   pair: string
 ): Promise<void> {
   console.log('adding txns on pair_hour, pair_day, terraswap_day')
-  await updateOrAddTxns(Cycle.hour, timestamp, manager, pair)
-  await updateOrAddTxns(Cycle.day, timestamp, manager, pair)
+  await updateOrAddTxns(Cycle.HOUR, timestamp, manager, pair)
+  await updateOrAddTxns(Cycle.DAY, timestamp, manager, pair)
   await updateOrAddTxnsForTerraswap(timestamp, manager)
 }
 
@@ -29,8 +29,8 @@ export async function updateVolume(
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   console.log('updating volumne on pair_hour, pair_day, terraswa_day')
-  await updatePairVolume(Cycle.hour, manager, transformed, exchangeRate)
-  await updatePairVolume(Cycle.day, manager, transformed, exchangeRate)
+  await updatePairVolume(Cycle.HOUR, manager, transformed, exchangeRate)
+  await updatePairVolume(Cycle.DAY, manager, transformed, exchangeRate)
   await updateTerraswapVolume(manager, transformed, exchangeRate)
 }
 
@@ -92,7 +92,7 @@ export async function updateLpTokenShare(
   transformed: TxHistoryTransformed
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
-    cycle === Cycle.hour ? PairHourDataEntity : PairDayDataEntity
+    cycle === Cycle.HOUR ? PairHourDataEntity : PairDayDataEntity
   )
 
   const pair = transformed.pair
@@ -121,7 +121,7 @@ async function updateOrAddTxns(
   pair: string
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
-    cycle === Cycle.hour ? PairHourDataEntity : PairDayDataEntity
+    cycle === Cycle.HOUR ? PairHourDataEntity : PairDayDataEntity
   )
 
   const lastPairData = await pairRepo.findOne({
@@ -193,7 +193,7 @@ async function updateOrAddTxnsForTerraswap(
     order: { timestamp: 'DESC' },
   })
 
-  const txTime = numberToDate(timestamp, Cycle.day)
+  const txTime = numberToDate(timestamp, Cycle.DAY)
 
   const isSame = txTime.valueOf() === lastData?.timestamp?.valueOf()
 
@@ -218,7 +218,7 @@ async function updatePairVolume(
   exchangeRate: ExchangeRate | undefined
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
-    cycle === Cycle.hour ? PairHourDataEntity : PairDayDataEntity
+    cycle === Cycle.HOUR ? PairHourDataEntity : PairDayDataEntity
   )
 
   const pair = transformed.pair

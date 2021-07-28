@@ -117,7 +117,7 @@ export async function updateExchangeRate(
     order: { timestamp: 'DESC' },
   })
 
-  if (lastRate?.timestamp?.valueOf() === numberToDate(timestamp, Cycle.minute).valueOf()) {
+  if (lastRate?.timestamp?.valueOf() === numberToDate(timestamp, Cycle.MINUTE).valueOf()) {
     lastRate.token0Price = priceInfiniteToZero(
       updatedReserve.token1Reserve,
       updatedReserve.token0Reserve
@@ -135,7 +135,7 @@ export async function updateExchangeRate(
     return exchangeRateRepo.save(lastRate)
   } else {
     const exchangeRate = new ExchangeRateEntity({
-      timestamp: numberToDate(timestamp, Cycle.minute),
+      timestamp: numberToDate(timestamp, Cycle.MINUTE),
       pair: pair,
       token0: updatedReserve.token0,
       token0Price: priceInfiniteToZero(updatedReserve.token1Reserve, updatedReserve.token0Reserve),
@@ -155,8 +155,8 @@ export async function updateReserves(
   liquidity: string,
   pair: string
 ): Promise<void> {
-  await updateReserve(Cycle.hour, manager, updatedReserve, liquidity, pair)
-  await updateReserve(Cycle.day, manager, updatedReserve, liquidity, pair)
+  await updateReserve(Cycle.HOUR, manager, updatedReserve, liquidity, pair)
+  await updateReserve(Cycle.DAY, manager, updatedReserve, liquidity, pair)
 }
 
 export async function updateTotalLiquidity(
@@ -196,7 +196,7 @@ async function updateReserve(
 ): Promise<PairDataEntity | void> {
   console.log('updating reserve')
   const pairRepo = manager.getRepository(
-    cycle === Cycle.hour ? PairHourDataEntity : PairDayDataEntity
+    cycle === Cycle.HOUR ? PairHourDataEntity : PairDayDataEntity
   )
 
   const lastPairData = await pairRepo.findOne({
