@@ -13,11 +13,7 @@ export class TerraswapService {
     private readonly repo: Repository<TerraswapDayDataEntity>
   ) {}
 
-  async getTerraswapData(
-    from = Date.now() / 1000,
-    to = Date.now() / 1000,
-    repo = this.repo
-  ): Promise<TerraswapDay[]> {
+  async getTerraswapData(from: number, to: number, repo = this.repo): Promise<TerraswapDay[]> {
     const fromDate = numberToDate(from, Cycle.day)
     const toDate = numberToDate(to, Cycle.day)
 

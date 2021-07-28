@@ -16,9 +16,9 @@ export class ExchangeRateService {
 
   async exchangeRate(
     pair: string,
-    from = Date.now() / 1000,
-    to = Date.now() / 1000,
-    interval = 1,
+    from: number,
+    to: number,
+    interval: number,
     repo = this.repo
   ): Promise<void | ExchangeRate> {
     const fromDate = numberToDate(from, Cycle.minute)
@@ -38,7 +38,6 @@ export class ExchangeRateService {
     }
 
     if (!newFrom) return //no data
-
     const exchangeRate = await repo
       .createQueryBuilder()
       .where('pair = :pair', { pair })
@@ -47,7 +46,7 @@ export class ExchangeRateService {
       .orderBy('timestamp', 'DESC')
       .getMany()
 
-    if (!exchangeRate) return
+    if (!exchangeRate[0]) return
 
     const token0 = await this.tokenService.getTokenInfo(exchangeRate[0].token0)
     const token1 = await this.tokenService.getTokenInfo(exchangeRate[0].token1)

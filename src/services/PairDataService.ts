@@ -17,8 +17,8 @@ export class PairDataService {
 
   async getPairData(
     pair: string,
-    from = Date.now() / 1000,
-    to = Date.now() / 1000,
+    from: number,
+    to: number,
     cycle: Cycle,
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
@@ -51,7 +51,7 @@ export class PairDataService {
       .orderBy('timestamp', 'DESC')
       .getMany()
 
-    if (!pairData) return
+    if (!pairData[0]) return
 
     const token0 = await this.tokenService.getTokenInfo(pairData[0].token0)
     const token1 = await this.tokenService.getTokenInfo(pairData[0].token1)
@@ -77,7 +77,7 @@ export class PairDataService {
           liquidityUST: tick.liquidityUst,
           txCount: isSameTick ? tick.txns : 0,
         })
-        indexTimestamp -= cycle
+        indexTimestamp -= cycle / 1000
       }
     }
 

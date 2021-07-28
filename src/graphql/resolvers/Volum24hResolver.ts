@@ -3,7 +3,7 @@ import { Volume24h } from 'graphql/schema'
 import { Volume24hService } from 'services'
 
 @Resolver((of) => Volume24h)
-export class Recent24HResolver {
+export class Volume24hResolver {
   constructor(private readonly volume24hService: Volume24hService) {}
 
   @Query((returns) => [Volume24h])
@@ -12,7 +12,7 @@ export class Recent24HResolver {
   }
 
   @Query((returns) => Volume24h)
-  async terraswapDayData(@Arg('pairAddress') pairAddress: string): Promise<Volume24h> {
+  async volume24h(@Arg('pairAddress') pairAddress: string): Promise<Volume24h> {
     const result = await this.volume24hService.getTokenInfo(pairAddress)
     if (!result) throw new Error('pair is not exist')
     return result

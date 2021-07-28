@@ -11,6 +11,6 @@ export class TerraswapDayDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<TerraswapDay[]> {
-    return await this.terraswapServie.getTerraswapData()
+    return await this.terraswapServie.getTerraswapData(from, to)
   }
 }
