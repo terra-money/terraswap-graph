@@ -17,16 +17,16 @@ export class PairDataService {
 
   async getPairData(
     pair: string,
-    from = Date.now(),
-    to = Date.now(),
+    from = Date.now() / 1000,
+    to = Date.now() / 1000,
     cycle: Cycle,
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
   ): Promise<void | PairData> {
     const repo = cycle == Cycle.day ? dayRepo : hourRepo
 
-    const fromDate = numberToDate((from + cycle) / 1000, cycle)
-    const toDate = numberToDate(to / 1000, cycle)
+    const fromDate = numberToDate(from + cycle / 1000, cycle)
+    const toDate = numberToDate(to, cycle)
 
     let newFrom = await repo.findOne({
       select: ['timestamp'],
@@ -60,8 +60,12 @@ export class PairDataService {
     const pairHistory: PairHistoricalData[] = []
 
     for (const tick of pairData) {
-      while (dateToNumber(tick.timestamp) <= indexTimestamp) {
+      while (
+        dateToNumber(tick.timestamp) <= indexTimestamp &&
+        indexTimestamp >= dateToNumber(fromDate)
+      ) {
         const isSameTick = dateToNumber(tick.timestamp) == indexTimestamp
+
         pairHistory.push({
           timestamp: indexTimestamp,
           token0Volume: isSameTick ? tick.token0Volume : '0',

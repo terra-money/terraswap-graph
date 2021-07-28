@@ -14,12 +14,12 @@ export class TerraswapService {
   ) {}
 
   async getTerraswapData(
-    from = Date.now(),
-    to = Date.now(),
+    from = Date.now() / 1000,
+    to = Date.now() / 1000,
     repo = this.repo
   ): Promise<TerraswapDay[]> {
-    const fromDate = numberToDate(from / 1000, Cycle.day)
-    const toDate = numberToDate(to / 1000, Cycle.day)
+    const fromDate = numberToDate(from, Cycle.day)
+    const toDate = numberToDate(to, Cycle.day)
 
     const terraswap = await repo
       .createQueryBuilder()

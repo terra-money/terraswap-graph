@@ -14,7 +14,7 @@ export class PairDataResolver {
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairData> {
     const dayData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.day)
-    if (!dayData) throw new Error('there are no transcation of this pair')
+    if (!dayData) throw new Error('there are no transaction of this pair')
     return dayData
   }
 
@@ -25,7 +25,7 @@ export class PairDataResolver {
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairData> {
     const hourData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.hour)
-    if (!hourData) throw new Error('there are no transcation from this pair')
+    if (!hourData) throw new Error('there are no transaction from this pair')
     return hourData
   }
 }

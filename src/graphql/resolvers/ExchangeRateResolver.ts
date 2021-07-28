@@ -13,13 +13,19 @@ export class ExchangeRateResolver {
     @Arg('to', { description: 'timestamp second' }) to: number,
     @Arg('interval', { description: 'unit: minute' }) interval: number
   ): Promise<ExchangeRate> {
+    rangeLimit(from, to, interval, 500)
     const exchangeRate = await this.exchangeRateService.exchangeRate(
       pairAddress,
       from,
       to,
       interval
     )
-    if (!exchangeRate) throw new Error('there are no transcation of this pair')
+    if (!exchangeRate) throw new Error('there are no transactions of this pair')
     return exchangeRate
   }
+}
+
+function rangeLimit(from: number, to: number, interval: number, limit: number) {
+  if ((to - from) / (interval * 60) > limit)
+    throw new Error(`max limit is '${limit}' set your range narrower or set larger interval`)
 }

@@ -16,13 +16,13 @@ export class ExchangeRateService {
 
   async exchangeRate(
     pair: string,
-    from = Date.now(),
-    to = Date.now(),
+    from = Date.now() / 1000,
+    to = Date.now() / 1000,
     interval = 1,
     repo = this.repo
   ): Promise<void | ExchangeRate> {
-    const fromDate = numberToDate(from / 1000, Cycle.minute)
-    const toDate = numberToDate(to / 1000, Cycle.minute)
+    const fromDate = numberToDate(from, Cycle.minute)
+    const toDate = numberToDate(to, Cycle.minute)
 
     let newFrom = await repo.findOne({
       select: ['timestamp'],
@@ -56,7 +56,10 @@ export class ExchangeRateService {
     const prices: Price[] = []
 
     for (const tick of exchangeRate) {
-      while (dateToNumber(tick.timestamp) <= indexTimestamp) {
+      while (
+        dateToNumber(tick.timestamp) <= indexTimestamp &&
+        indexTimestamp >= dateToNumber(fromDate)
+      ) {
         prices.push({
           timestamp: indexTimestamp,
           token0Price: tick.token0Price,
