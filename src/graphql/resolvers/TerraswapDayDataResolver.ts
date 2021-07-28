@@ -1,6 +1,8 @@
 import { Arg, Query, Resolver } from 'type-graphql'
 import { TerraswapDay } from 'graphql/schema'
 import { TerraswapService } from 'services'
+import { rangeLimit } from 'lib/utils'
+import { Cycle } from 'types'
 
 @Resolver((of) => TerraswapDay)
 export class TerraswapDayDataResolver {
@@ -11,6 +13,7 @@ export class TerraswapDayDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<TerraswapDay[]> {
-    return await this.terraswapServie.getTerraswapData(from, to)
+    rangeLimit(from, to, 1, Cycle.DAY, 500)
+    return this.terraswapServie.getTerraswapData(from, to)
   }
 }

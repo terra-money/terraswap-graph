@@ -14,8 +14,8 @@ export class TerraswapService {
   ) {}
 
   async getTerraswapData(from: number, to: number, repo = this.repo): Promise<TerraswapDay[]> {
-    const fromDate = numberToDate(from, Cycle.day)
-    const toDate = numberToDate(to, Cycle.day)
+    const fromDate = numberToDate(from, Cycle.DAY)
+    const toDate = numberToDate(to, Cycle.DAY)
 
     const terraswap = await repo
       .createQueryBuilder()

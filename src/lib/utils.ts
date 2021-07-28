@@ -1,3 +1,5 @@
+import { Cycle } from 'types'
+
 interface AssetInfo {
   token: string
   amount: string
@@ -61,4 +63,15 @@ export function addressMatch(value: string, addressList: string[]): boolean {
   for (const address of addressList) {
     if (address == value) return true
   }
+}
+
+export function rangeLimit(
+  from: number,
+  to: number,
+  interval: number,
+  cycle: Cycle,
+  limit: number
+): void {
+  if ((to - from) / (interval * (cycle / 1000)) > limit)
+    throw new Error(`max limit is '${limit}' set your range narrower or set larger interval`)
 }

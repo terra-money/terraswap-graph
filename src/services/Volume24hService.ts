@@ -37,9 +37,9 @@ export class Volume24hService {
       pairAddress: pair,
       token0,
       token1,
-      token0Volume: sumVolume(Key.token0Volume, recent).toString(),
-      token1Volume: sumVolume(Key.token1Volume, recent).toString(),
-      volumeUST: sumVolume(Key.volumeUST, recent).toString(),
+      token0Volume: sumVolume(Key.TOKEN_0_VOLUME, recent).toString(),
+      token1Volume: sumVolume(Key.TOKEN_1_VOLUME, recent).toString(),
+      volumeUST: sumVolume(Key.VOLUME_UST, recent).toString(),
     }
   }
 
@@ -64,9 +64,9 @@ function sumVolume(key: Key, recentData: Recent24hEntity[]) {
 }
 
 enum Key {
-  token0Volume = 'token0Volume',
-  token1Volume = 'token1Volume',
-  volumeUST = 'volumeUst',
+  TOKEN_0_VOLUME = 'token0Volume',
+  TOKEN_1_VOLUME = 'token1Volume',
+  VOLUME_UST = 'volumeUst',
 }
 
 export function volume24hService(): Volume24hService {

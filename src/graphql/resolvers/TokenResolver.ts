@@ -8,11 +8,11 @@ export class TokenResolver {
 
   @Query((returns) => Token)
   async tokenInfo(@Arg('tokenAddress') tokenAddress: string): Promise<Token> {
-    return await this.tokenService.getTokenInfo(tokenAddress)
+    return this.tokenService.getTokenInfo(tokenAddress)
   }
 
   @Query((returns) => [Token])
   async tokenInfos(): Promise<Token[]> {
-    return await this.tokenService.getTokenInfos()
+    return this.tokenService.getTokenInfos()
   }
 }

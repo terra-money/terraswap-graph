@@ -23,7 +23,7 @@ export class PairDataService {
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
   ): Promise<void | PairData> {
-    const repo = cycle == Cycle.day ? dayRepo : hourRepo
+    const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
 
     const fromDate = numberToDate(from + cycle / 1000, cycle)
     const toDate = numberToDate(to, cycle)

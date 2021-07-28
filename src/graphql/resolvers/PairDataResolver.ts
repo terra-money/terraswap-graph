@@ -2,6 +2,7 @@ import { Arg, Query, Resolver } from 'type-graphql'
 import { PairData } from 'graphql/schema'
 import { PairDataService } from 'services'
 import { Cycle } from 'types'
+import { rangeLimit } from 'lib/utils'
 
 @Resolver((of) => PairData)
 export class PairDataResolver {
@@ -13,8 +14,9 @@ export class PairDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairData> {
-    const dayData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.day)
-    if (!dayData) throw new Error('there are no transaction of this pair')
+    rangeLimit(from, to, 1, Cycle.DAY, 500)
+    const dayData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.DAY)
+    if (!dayData) throw new Error('there are no transactions of this pair')
     return dayData
   }
 
@@ -24,8 +26,9 @@ export class PairDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairData> {
-    const hourData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.hour)
-    if (!hourData) throw new Error('there are no transaction from this pair')
+    rangeLimit(from, to, 1, Cycle.HOUR, 500)
+    const hourData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.HOUR)
+    if (!hourData) throw new Error('there are no transactions from this pair')
     return hourData
   }
 }

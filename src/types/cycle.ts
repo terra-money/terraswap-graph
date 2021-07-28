@@ -1,5 +1,5 @@
 export enum Cycle {
-  day = 86400000,
-  hour = 3600000,
-  minute = 60000,
+  DAY = 86400000,
+  HOUR = 3600000,
+  MINUTE = 60000,
 }

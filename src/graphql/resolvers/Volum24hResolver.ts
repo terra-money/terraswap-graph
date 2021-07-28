@@ -8,7 +8,7 @@ export class Volume24hResolver {
 
   @Query((returns) => [Volume24h])
   async volume24hAll(): Promise<Volume24h[]> {
-    return await this.volume24hService.getTokensInfo()
+    return this.volume24hService.getTokensInfo()
   }
 
   @Query((returns) => Volume24h)
