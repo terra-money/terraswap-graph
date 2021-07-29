@@ -1,9 +1,11 @@
 import { Arg, Query, Resolver } from 'type-graphql'
+import { Service } from 'typedi'
 import { TerraswapDay } from 'graphql/schema'
 import { TerraswapService } from 'services'
 import { rangeLimit } from 'lib/utils'
 import { Cycle } from 'types'
 
+@Service()
 @Resolver((of) => TerraswapDay)
 export class TerraswapDayDataResolver {
   constructor(private readonly terraswapServie: TerraswapService) {}

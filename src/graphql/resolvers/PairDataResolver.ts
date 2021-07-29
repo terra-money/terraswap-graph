@@ -1,9 +1,11 @@
 import { Arg, Query, Resolver } from 'type-graphql'
+import { Service } from 'typedi'
 import { PairData } from 'graphql/schema'
 import { PairDataService } from 'services'
 import { Cycle } from 'types'
 import { rangeLimit } from 'lib/utils'
 
+@Service()
 @Resolver((of) => PairData)
 export class PairDataResolver {
   constructor(private readonly pairDataService: PairDataService) {}
