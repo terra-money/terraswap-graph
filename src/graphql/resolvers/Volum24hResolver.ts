@@ -4,7 +4,7 @@ import { Volume24h } from 'graphql/schema'
 import { Volume24hService } from 'services'
 
 @Service()
-@Resolver((of) => Volume24h, { isAbstract: true })
+@Resolver((of) => Volume24h)
 export class Volume24hResolver {
   constructor(private readonly volume24hService: Volume24hService) {}
 

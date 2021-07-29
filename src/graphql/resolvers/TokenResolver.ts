@@ -4,7 +4,7 @@ import { Token } from 'graphql/schema'
 import { TokenService } from 'services'
 
 @Service()
-@Resolver((of) => Token, { isAbstract: true })
+@Resolver((of) => Token)
 export class TokenResolver {
   constructor(private readonly tokenService: TokenService) {}
 
