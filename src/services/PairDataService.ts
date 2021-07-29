@@ -15,19 +15,36 @@ export class PairDataService {
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
-  async getPairData(
+  async getPairData(pair: string, hourRepo = this.hourRepo): Promise<void | Partial<PairData>> {
+    const repo = hourRepo
+
+    const latest = await repo.findOne({ order: { timestamp: 'DESC' } })
+
+    if (!latest) return
+
+    const token0 = await this.tokenService.getTokenInfo(latest.token0)
+    const token1 = await this.tokenService.getTokenInfo(latest.token1)
+
+    return {
+      pairAddress: pair,
+      token0,
+      token1,
+      latestToken0Price: (Number(latest.token1Reserve) / Number(latest.token0Reserve)).toFixed(10),
+      latestToken1Price: (Number(latest.token0Reserve) / Number(latest.token1Reserve)).toFixed(10),
+    }
+  }
+
+  async getHistoricalData(
     pair: string,
     from: number,
     to: number,
     cycle: Cycle,
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
-  ): Promise<void | PairData> {
+  ): Promise<void | PairHistoricalData[]> {
     const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
-
     const fromDate = numberToDate(from + cycle / 1000, cycle)
     const toDate = numberToDate(to, cycle)
-
     let newFrom = await repo.findOne({
       select: ['timestamp'],
       order: { timestamp: 'DESC' },
@@ -51,14 +68,10 @@ export class PairDataService {
       .orderBy('timestamp', 'DESC')
       .getMany()
 
-    const latest = await repo.findOne({ order: { timestamp: 'DESC' } })
-
     if (!pairData[0]) return
 
-    const token0 = await this.tokenService.getTokenInfo(pairData[0].token0)
-    const token1 = await this.tokenService.getTokenInfo(pairData[0].token1)
-
     let indexTimestamp = dateToNumber(toDate)
+
     const pairHistory: PairHistoricalData[] = []
 
     for (const tick of pairData) {
@@ -85,14 +98,7 @@ export class PairDataService {
       }
     }
 
-    return {
-      pairAddress: pair,
-      token0,
-      token1,
-      latestToken0Price: (Number(latest.token1Reserve) / Number(latest.token0Reserve)).toFixed(10),
-      latestToken1Price: (Number(latest.token0Reserve) / Number(latest.token1Reserve)).toFixed(10),
-      historicalData: pairHistory,
-    }
+    return pairHistory
   }
 }
 
