@@ -51,6 +51,8 @@ export class PairDataService {
       .orderBy('timestamp', 'DESC')
       .getMany()
 
+    const latest = await repo.findOne({ order: { timestamp: 'DESC' } })
+
     if (!pairData[0]) return
 
     const token0 = await this.tokenService.getTokenInfo(pairData[0].token0)
@@ -68,6 +70,8 @@ export class PairDataService {
 
         pairHistory.push({
           timestamp: indexTimestamp,
+          token0Price: (Number(tick.token1Reserve) / Number(tick.token0Reserve)).toFixed(10),
+          token1Price: (Number(tick.token0Reserve) / Number(tick.token1Reserve)).toFixed(10),
           token0Volume: isSameTick ? tick.token0Volume : '0',
           token1Volume: isSameTick ? tick.token1Volume : '0',
           token0Reserve: tick.token0Reserve,
@@ -85,6 +89,8 @@ export class PairDataService {
       pairAddress: pair,
       token0,
       token1,
+      latestToken0Price: (Number(latest.token1Reserve) / Number(latest.token0Reserve)).toFixed(10),
+      latestToken1Price: (Number(latest.token0Reserve) / Number(latest.token1Reserve)).toFixed(10),
       historicalData: pairHistory,
     }
   }

@@ -12,6 +12,12 @@ export class PairData {
   @Field((type) => Token)
   token1: Token
 
+  @Field()
+  latestToken0Price: string
+
+  @Field()
+  latestToken1Price: string
+
   @Field((type) => [PairHistoricalData])
   historicalData: PairHistoricalData[]
 }
@@ -20,6 +26,12 @@ export class PairData {
 export class PairHistoricalData {
   @Field()
   timestamp: number
+
+  @Field()
+  token0Price: string
+
+  @Field()
+  token1Price: string
 
   @Field()
   token0Volume: string
