@@ -13,7 +13,7 @@ export class PairService {
   ) {}
 
   async getPairInfo(pair: string, repo = this.repo): Promise<Pair> {
-    const pairInfo = await repo.findOne({ where: { tokenAddress: pair } })
+    const pairInfo = await repo.findOne({ where: { pair } })
     const token0 = await this.tokenService.getTokenInfo(pairInfo.token0)
     const token1 = await this.tokenService.getTokenInfo(pairInfo.token1)
     return {
