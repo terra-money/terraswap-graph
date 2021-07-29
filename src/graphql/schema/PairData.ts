@@ -16,6 +16,7 @@ export class PairData {
   historicalData: PairHistoricalData[]
 }
 
+@ObjectType({ simpleResolvers: true })
 export class PairHistoricalData {
   @Field()
   timestamp: number

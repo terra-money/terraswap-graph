@@ -1,7 +1,9 @@
 import { Arg, Query, Resolver } from 'type-graphql'
+import { Service } from 'typedi'
 import { Volume24h } from 'graphql/schema'
 import { Volume24hService } from 'services'
 
+@Service()
 @Resolver((of) => Volume24h)
 export class Volume24hResolver {
   constructor(private readonly volume24hService: Volume24hService) {}
