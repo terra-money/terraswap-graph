@@ -4,7 +4,7 @@ import { BlockService } from 'services'
 import { Service } from 'typedi'
 
 @Service()
-@Resolver((of) => Block)
+@Resolver((of) => Block, { isAbstract: true })
 export class BlockResolver {
   constructor(private readonly blockService: BlockService) {}
 

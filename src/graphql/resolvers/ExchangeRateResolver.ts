@@ -1,9 +1,11 @@
 import { Arg, Query, Resolver } from 'type-graphql'
+import { Service } from 'typedi'
 import { ExchangeRate } from 'graphql/schema'
 import { ExchangeRateService } from 'services'
 import { rangeLimit } from 'lib/utils'
 import { Cycle } from 'types'
 
+@Service()
 @Resolver((of) => ExchangeRate)
 export class ExchangeRateResolver {
   constructor(private readonly exchangeRateService: ExchangeRateService) {}

@@ -1,8 +1,10 @@
 import { Arg, Query, Resolver } from 'type-graphql'
+import { Service } from 'typedi'
 import { Token } from 'graphql/schema'
 import { TokenService } from 'services'
 
-@Resolver((of) => Token)
+@Service()
+@Resolver((of) => Token, { isAbstract: true })
 export class TokenResolver {
   constructor(private readonly tokenService: TokenService) {}
 
