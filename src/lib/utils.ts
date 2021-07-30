@@ -65,13 +65,7 @@ export function addressMatch(value: string, addressList: string[]): boolean {
   }
 }
 
-export function rangeLimit(
-  from: number,
-  to: number,
-  interval: number,
-  cycle: Cycle,
-  limit: number
-): void {
-  if ((to - from) / (interval * (cycle / 1000)) > limit)
+export function rangeLimit(from: number, to: number, cycle: Cycle, limit: number): void {
+  if ((to - from) / (cycle / 1000) > limit)
     throw new Error(`max limit is '${limit}' set your range narrower or set larger interval`)
 }

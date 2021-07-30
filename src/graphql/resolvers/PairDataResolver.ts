@@ -1,8 +1,8 @@
-import { Arg, Query, Resolver } from 'type-graphql'
+import { Arg, FieldResolver, Query, Resolver, Root } from 'type-graphql'
 import { Service } from 'typedi'
-import { PairData } from 'graphql/schema'
+import { PairData, PairHistoricalData } from 'graphql/schema'
 import { PairDataService } from 'services'
-import { Cycle } from 'types'
+import { Cycle, Interval } from 'types'
 import { rangeLimit } from 'lib/utils'
 
 @Service()
@@ -11,26 +11,24 @@ export class PairDataResolver {
   constructor(private readonly pairDataService: PairDataService) {}
 
   @Query((returns) => PairData)
-  async pairDayData(
-    @Arg('pairAddress') pairAddress: string,
-    @Arg('from', { description: 'timestamp second' }) from: number,
-    @Arg('to', { description: 'timestamp second' }) to: number
-  ): Promise<PairData> {
-    rangeLimit(from, to, 1, Cycle.DAY, 500)
-    const dayData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.DAY)
-    if (!dayData) throw new Error('there are no transactions of this pair')
-    return dayData
+  async pairData(@Arg('pairAddress') pairAddress: string): Promise<PairData> {
+    const pairData = await this.pairDataService.getPairData(pairAddress)
+    if (!pairData) throw new Error('there are no transactions of this pair')
+    return pairData as PairData
   }
 
-  @Query((returns) => PairData)
-  async pairHourData(
-    @Arg('pairAddress') pairAddress: string,
+  @FieldResolver((type) => [PairHistoricalData])
+  async historicalData(
+    @Root() pairDayData: PairData,
+    @Arg('interval', (type) => Interval, { description: 'day or hour' }) interval: Interval,
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
-  ): Promise<PairData> {
-    rangeLimit(from, to, 1, Cycle.HOUR, 500)
-    const hourData = await this.pairDataService.getPairData(pairAddress, from, to, Cycle.HOUR)
-    if (!hourData) throw new Error('there are no transactions from this pair')
-    return hourData
+  ): Promise<PairHistoricalData[]> {
+    const cycle = interval == Interval.DAY ? Cycle.DAY : Cycle.HOUR
+    rangeLimit(from, to, cycle, 500)
+    const pair = pairDayData.pairAddress
+    const data = await this.pairDataService.getHistoricalData(pair, from, to, cycle)
+    if (!data) throw new Error('there are no transactions of this pair')
+    return data
   }
 }
