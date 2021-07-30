@@ -275,7 +275,7 @@ async function volumeToUST(
     : Math.abs(Number(token1Price.price) * Number(transformed.assets[1].amount)).toString()
 }
 
-async function liquidityCompare(liquidity0: string, liquidity1: string) {
+function liquidityCompare(liquidity0: string, liquidity1: string) {
   if (liquidity0 === 'native') return true
   if (liquidity1 === 'native') return false
   return Number(liquidity0) > Number(liquidity1)
