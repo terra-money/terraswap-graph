@@ -18,7 +18,10 @@ export class PairDataService {
   async getPairData(pair: string, hourRepo = this.hourRepo): Promise<void | Partial<PairData>> {
     const repo = hourRepo
 
-    const latest = await repo.findOne({ order: { timestamp: 'DESC' } })
+    const latest = await repo.findOne({
+      where: { pair },
+      order: { timestamp: 'DESC' },
+    })
 
     if (!latest) return
 
