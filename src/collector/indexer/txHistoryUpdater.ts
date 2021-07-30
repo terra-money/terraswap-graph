@@ -9,7 +9,7 @@ import {
   Recent24hEntity,
 } from 'orm'
 import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
-import { addMinus, numberToDate, tokenOrderedWell } from 'lib/utils'
+import { isNative, addMinus, numberToDate, tokenOrderedWell } from 'lib/utils'
 import { tokenPriceAsUST } from './common'
 
 export async function updateTxns(
@@ -256,23 +256,61 @@ async function volumeToUST(
   transformed: TxHistoryTransformed,
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
-  const token0Price = await tokenPriceAsUST(
-    manager,
-    transformed.assets[0].token,
-    timestamp,
-    exchangeRate
-  )
+  //case1. uusd exist
+  if (transformed.assets[0].token == 'uusd' || transformed.assets[1].token == 'uusd') {
+    return transformed.assets[0].token == 'uusd'
+      ? Math.abs(Number(transformed.assets[0].amount)).toString()
+      : Math.abs(Number(transformed.assets[1].amount)).toString()
+  }
 
-  const token1Price = await tokenPriceAsUST(
-    manager,
-    transformed.assets[1].token,
-    timestamp,
-    exchangeRate
-  )
+  //case2. both are native: use asset0
+  else if (isNative(transformed.assets[0].token) && isNative(transformed.assets[1].token)) {
+    const token0Price = await tokenPriceAsUST(
+      manager,
+      transformed.assets[0].token,
+      timestamp,
+      exchangeRate
+    )
 
-  return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
-    ? Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
-    : Math.abs(Number(token1Price.price) * Number(transformed.assets[1].amount)).toString()
+    return Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
+  }
+
+  //case3. only one is native
+  else if (isNative(transformed.assets[0].token) && isNative(transformed.assets[1].token)) {
+    const nativeTokenIndex = isNative(transformed.assets[0].token) ? 0 : 1
+
+    const tokenPrice = await tokenPriceAsUST(
+      manager,
+      transformed.assets[nativeTokenIndex].token,
+      timestamp,
+      exchangeRate
+    )
+
+    return Math.abs(
+      Number(tokenPrice.price) * Number(transformed.assets[nativeTokenIndex].amount)
+    ).toString()
+  }
+
+  //case4. both are non-native
+  else {
+    const token0Price = await tokenPriceAsUST(
+      manager,
+      transformed.assets[0].token,
+      timestamp,
+      exchangeRate
+    )
+
+    const token1Price = await tokenPriceAsUST(
+      manager,
+      transformed.assets[1].token,
+      timestamp,
+      exchangeRate
+    )
+
+    return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
+      ? Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
+      : Math.abs(Number(token1Price.price) * Number(transformed.assets[1].amount)).toString()
+  }
 }
 
 function liquidityCompare(liquidity0: string, liquidity1: string) {
