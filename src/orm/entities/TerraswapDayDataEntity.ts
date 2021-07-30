@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
+import { Entity, Index, PrimaryGeneratedColumn, Column } from 'typeorm'
 
 @Entity('terra_swap_day_data')
 export class TerraswapDayDataEntity {
@@ -10,6 +10,7 @@ export class TerraswapDayDataEntity {
   id: string
 
   @Column()
+  @Index()
   timestamp: Date
 
   @Column('decimal', { precision: 40 })

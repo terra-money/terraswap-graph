@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm'
 
 @Entity('exchange_rate')
 export class ExchangeRateEntity {
@@ -10,9 +10,11 @@ export class ExchangeRateEntity {
   id: string
 
   @Column()
+  @Index()
   timestamp: Date
 
   @Column()
+  @Index()
   pair: string
 
   @Column()
