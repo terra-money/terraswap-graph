@@ -9,6 +9,7 @@ export class PairDataEntity {
   id: string
 
   @Column()
+  @Index()
   timestamp: Date
 
   @Column()

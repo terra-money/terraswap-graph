@@ -10,6 +10,7 @@ export class TxHistoryEntity {
   id: string
 
   @Column()
+  @Index()
   timestamp: Date
 
   @Column()
@@ -20,6 +21,7 @@ export class TxHistoryEntity {
   pair: string
 
   @Column()
+  @Index()
   action: string
 
   @Column()

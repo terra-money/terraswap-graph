@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
+import { Entity, Index, PrimaryGeneratedColumn, Column } from 'typeorm'
 
 @Entity('recent_24h')
 export class Recent24hEntity {
@@ -10,6 +10,7 @@ export class Recent24hEntity {
   id: string
 
   @Column()
+  @Index()
   pair: string
 
   @Column()
