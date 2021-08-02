@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm'
 import { Block, ExchangeRate } from 'types'
 import { CreatePairIndexer } from './createPairIndexer'
 import { TxHistoryIndexer } from './txHistoryIndexer'
-import { NonnativeTransferIndexer, NativeTransferIndexer } from './TransferIndex'
+import { NonnativeTransferIndexer, NativeTransferIndexer } from './transferIndex'
 import { getPairList, getTokenList } from './common'
 
 export async function runIndexers(
