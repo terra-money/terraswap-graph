@@ -43,5 +43,6 @@ export async function collect(): Promise<void> {
       }
       await delete24hData(manager, new Date().valueOf())
     })
+    await delay(50)
   }
 }
