@@ -1,5 +1,12 @@
 import { EntityManager, getManager } from 'typeorm'
 import { delay } from 'bluebird'
+import { ReturningLogFinderMapper } from '@terra-money/log-finder'
+import {
+  TxHistoryTransformed,
+  NativeTransferTransformed,
+  NonnativeTransferTransformed,
+  createPairTransformed,
+} from 'types'
 import { getBlock, getLatestBlock, oracleExchangeRate } from 'lib/terra'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
@@ -8,7 +15,12 @@ import { runIndexers } from './indexer'
 import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
 
-export async function collect(): Promise<void> {
+export async function collect(
+  createCreatePairLogFinders: ReturningLogFinderMapper<createPairTransformed>,
+  createTxHistoryFinders: ReturningLogFinderMapper<TxHistoryTransformed>[],
+  createNativeTransferLogFinders: ReturningLogFinderMapper<NativeTransferTransformed[]>,
+  createNonnativeTransferLogFinders: ReturningLogFinderMapper<NonnativeTransferTransformed>[]
+): Promise<void> {
   const latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
@@ -37,7 +49,15 @@ export async function collect(): Promise<void> {
       logger.info(i)
       for (const block of blocks) {
         if (block.Txs[0] != undefined) {
-          await runIndexers(manager, block, exchangeRate)
+          await runIndexers(
+            manager,
+            block,
+            exchangeRate,
+            createCreatePairLogFinders,
+            createTxHistoryFinders,
+            createNativeTransferLogFinders,
+            createNonnativeTransferLogFinders
+          )
           await updateBlock(collectedBlock, block.Txs[0].Height, manager.getRepository(BlockEntity))
         }
       }

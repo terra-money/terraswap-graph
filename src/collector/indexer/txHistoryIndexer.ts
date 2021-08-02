@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block, Cycle, ExchangeRate } from 'types'
+import { Block, Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
 import {
   updateTxns,
   updateVolume,
@@ -9,15 +9,15 @@ import {
   updateLpTokenShare,
   updateVolume24h,
 } from './txHistoryUpdater'
-import { createTxHistoryFinders } from '../log-finder'
+import { ReturningLogFinderMapper } from '@terra-money/log-finder'
 
 export async function TxHistoryIndexer(
   pairAddresses: string[],
   entityManager: EntityManager,
   block: Block,
-  exchangeRate: ExchangeRate | undefined
+  exchangeRate: ExchangeRate | undefined,
+  logFinders: ReturningLogFinderMapper<TxHistoryTransformed>[]
 ): Promise<void> {
-  const logFinders = createTxHistoryFinders()
   const Txs = block.Txs
   await mapSeries(Txs, async (tx) => {
     const txHash = tx.TxHash

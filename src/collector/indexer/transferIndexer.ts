@@ -1,5 +1,5 @@
 import { EntityManager } from 'typeorm'
-import { Block, ExchangeRate, NonnativeTransferTransformed } from 'types'
+import { Block, ExchangeRate, NativeTransferTransformed, NonnativeTransferTransformed } from 'types'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
 import { addMinus } from 'lib/utils'
@@ -11,15 +11,15 @@ import {
   updateReserves,
   updateTotalLiquidity,
 } from './transferUpdater'
-import { createNativeTransferLogFinders, createNonnativeTransferLogFinders } from '../log-finder'
+import { ReturningLogFinderMapper } from '@terra-money/log-finder'
 
 export async function NativeTransferIndexer(
   pairAddresses: string[],
   entityManager: EntityManager,
   block: Block,
-  exchangeRate: ExchangeRate | undefined
+  exchangeRate: ExchangeRate | undefined,
+  logFinder: ReturningLogFinderMapper<NativeTransferTransformed[]>
 ): Promise<void> {
-  const logFinder = createNativeTransferLogFinders()
   const Txs = block.Txs
 
   await mapSeries(Txs, async (tx) => {
@@ -81,9 +81,9 @@ export async function NonnativeTransferIndexer(
   tokenAddresses: string[],
   entityManager: EntityManager,
   block: Block,
-  exchangeRate: ExchangeRate | undefined
+  exchangeRate: ExchangeRate | undefined,
+  logFinders: ReturningLogFinderMapper<NonnativeTransferTransformed>[]
 ): Promise<void> {
-  const logFinders = createNonnativeTransferLogFinders()
   const Txs = block.Txs
 
   await mapSeries(Txs, async (tx) => {

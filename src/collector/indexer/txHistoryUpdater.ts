@@ -64,8 +64,6 @@ export async function addTxHistory(
   txHash: string,
   transformed: TxHistoryTransformed
 ): Promise<TxHistoryEntity> {
-  console.log('adding txHistory')
-
   const txHistoryRepo = manager.getRepository(TxHistoryEntity)
 
   const isRightOrder = tokenOrderedWell([transformed.assets[0].token, transformed.assets[1].token])

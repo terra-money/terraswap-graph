@@ -10,6 +10,11 @@ export interface TxHistoryTransformed {
   share: string
 }
 
+export interface createPairTransformed {
+  assets: string[]
+  pairAddress: string
+  lpTokenAddress: string
+}
 export interface TransferTransformed {
   pairAddress: string
   assets: {

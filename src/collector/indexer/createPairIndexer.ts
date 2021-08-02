@@ -1,14 +1,15 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block } from 'types'
+import { Block, createPairTransformed } from 'types'
 import { addTokenInfo, addPairInfo } from './createPairUpdater'
-import { createCreatePairLogFinders } from '../log-finder'
+import { ReturningLogFinderMapper } from '@terra-money/log-finder'
 
-const factoryAddress = 'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj'
-
-export async function CreatePairIndexer(entityManager: EntityManager, block: Block): Promise<void> {
-  const logFinder = createCreatePairLogFinders(factoryAddress)
+export async function CreatePairIndexer(
+  entityManager: EntityManager,
+  block: Block,
+  logFinder: ReturningLogFinderMapper<createPairTransformed>
+): Promise<void> {
   const Txs = block.Txs
   await mapSeries(Txs, async (tx) => {
     const Logs = tx.Logs
