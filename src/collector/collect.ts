@@ -1,15 +1,15 @@
 import { EntityManager, getManager } from 'typeorm'
 import { delay } from 'bluebird'
 import { getBlock, getLatestBlock, oracleExchangeRate } from 'lib/terra'
+import { errorHandler } from 'lib/error'
+import * as logger from 'lib/logger'
 import { getCollectedBlock, updateBlock } from './block'
 import { runIndexers } from './indexer'
 import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
 
 export async function collect(): Promise<void> {
-  const latestBlock = await getLatestBlock().catch(async (err) => {
-    console.log(err)
-  })
+  const latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
 
@@ -22,23 +22,19 @@ export async function collect(): Promise<void> {
     return
   }
 
-  for (let i = lastHeight + 1; i <= latestBlock; i += 100) {
-    const endblock = i + 99 < latestBlock ? i + 99 : latestBlock
+  const blockCounts = 100
 
-    const blocks = await getBlock(i, endblock).catch(async (err) => {
-      console.log(err)
-    })
+  for (let i = lastHeight + 1; i <= latestBlock; i += blockCounts) {
+    const endblock = i + blockCounts - 1 < latestBlock ? i + blockCounts - 1 : latestBlock
+    const blocks = await getBlock(i, endblock, blockCounts).catch(errorHandler)
     if (!blocks) return
 
-    const exchangeRate = await oracleExchangeRate(endblock - (endblock % 100)).catch(
-      async (err) => {
-        console.log(err)
-      }
-    )
+    const exchangeRate = await oracleExchangeRate(endblock - (endblock % 100)).catch(errorHandler)
+
     if (!exchangeRate) return
 
     await getManager().transaction(async (manager: EntityManager) => {
-      console.log(i)
+      logger.info(i)
       for (const block of blocks) {
         if (block.Txs[0] != undefined) {
           await runIndexers(manager, block, exchangeRate)

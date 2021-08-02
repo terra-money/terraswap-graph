@@ -17,6 +17,7 @@ export async function CreatePairIndexer(entityManager: EntityManager, block: Blo
       const events = log.Events
 
       await mapSeries(events, async (event) => {
+        if (event.Attributes.length > 1800) return
         const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
         await mapSeries(logFounds, async (logFound) => {

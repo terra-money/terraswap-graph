@@ -17,7 +17,6 @@ export async function updateTxns(
   manager: EntityManager,
   pair: string
 ): Promise<void> {
-  console.log('adding txns on pair_hour, pair_day, terraswap_day')
   await updateOrAddTxns(Cycle.HOUR, timestamp, manager, pair)
   await updateOrAddTxns(Cycle.DAY, timestamp, manager, pair)
   await updateOrAddTxnsForTerraswap(timestamp, manager)
@@ -28,7 +27,6 @@ export async function updateVolume(
   transformed: TxHistoryTransformed,
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
-  console.log('updating volumne on pair_hour, pair_day, terraswa_day')
   await updatePairVolume(Cycle.HOUR, manager, transformed, exchangeRate)
   await updatePairVolume(Cycle.DAY, manager, transformed, exchangeRate)
   await updateTerraswapVolume(manager, transformed, exchangeRate)

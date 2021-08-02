@@ -28,6 +28,7 @@ export async function TxHistoryIndexer(
 
       await mapSeries(events, async (event) => {
         await mapSeries(logFinders, async (logFinder) => {
+          if (event.Attributes.length > 1800) return
           const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
           await mapSeries(logFounds, async (logFound) => {
