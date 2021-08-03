@@ -30,6 +30,7 @@ export async function NativeTransferIndexer(
       const events = log.Events
 
       await mapSeries(events, async (event) => {
+        if (event.Attributes.length > 1800) return
         const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
         await mapSeries(logFounds, async (logFound) => {
@@ -94,6 +95,7 @@ export async function NonnativeTransferIndexer(
 
       await mapSeries(events, async (event) => {
         await mapSeries(logFinders, async (logFinder) => {
+          if (event.Attributes.length > 1800) return
           const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
           await mapSeries(logFounds, async (logFound) => {

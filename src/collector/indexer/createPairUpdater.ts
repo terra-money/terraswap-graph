@@ -39,7 +39,6 @@ export async function addPairInfo(
   manager: EntityManager,
   transformed: PairInfoTransformed
 ): Promise<PairInfoEntity> {
-  console.log('add pair info')
   const pairInfoRepo = manager.getRepository(PairInfoEntity)
 
   const token0 = tokenOrderedWell(transformed.assets)

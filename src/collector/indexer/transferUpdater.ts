@@ -109,7 +109,6 @@ export async function updateExchangeRate(
   timestamp: number,
   pair: string
 ): Promise<ExchangeRateEntity> {
-  console.log('updating exchange rate')
   const exchangeRateRepo = manager.getRepository(ExchangeRateEntity)
 
   const lastRate = await exchangeRateRepo.findOne({
@@ -194,7 +193,6 @@ async function updateReserve(
   liquidity: string,
   pair: string
 ): Promise<PairDataEntity | void> {
-  console.log('updating reserve')
   const pairRepo = manager.getRepository(
     cycle === Cycle.HOUR ? PairHourDataEntity : PairDayDataEntity
   )
