@@ -13,39 +13,18 @@ export function createPairRule(factoryAddress: string): LogFinderRule {
   }
 }
 
-export function swapRule(): LogFinderRule {
+// swap, provide and withdraw rule
+export function spwRule(): LogFinderRule {
   return {
     type: 'from_contract',
     attributes: [
       ['contract_address'],
-      ['action', 'swap'],
-      ['offer_asset'],
-      ['ask_asset'],
-      ['offer_amount'],
-      ['return_amount'],
-      ['tax_amount'],
-      ['spread_amount'],
-      ['commission_amount'],
+      [
+        'action',
+        (value) => value == 'swap' || value == 'provide_liquidity' || value == 'withdraw_liquidity',
+      ],
     ],
-  }
-}
-
-export function provideLiquidityRule(): LogFinderRule {
-  return {
-    type: 'from_contract',
-    attributes: [['contract_address'], ['action', 'provide_liquidity'], ['assets'], ['share']],
-  }
-}
-
-export function withdrawLiquidityRule(): LogFinderRule {
-  return {
-    type: 'from_contract',
-    attributes: [
-      ['contract_address'],
-      ['action', 'withdraw_liquidity'],
-      ['withdrawn_share'],
-      ['refund_assets'],
-    ],
+    matchUntil: 'contract_address',
   }
 }
 
