@@ -9,7 +9,7 @@ import {
   updateLpTokenShare,
   updateVolume24h,
 } from './txHistoryUpdater'
-import { createTxHistoryFinders } from '../log-finder'
+import { createSPWFinder } from '../log-finder'
 
 export async function TxHistoryIndexer(
   pairAddresses: string[],
@@ -17,7 +17,7 @@ export async function TxHistoryIndexer(
   block: Block,
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
-  const logFinders = createTxHistoryFinders()
+  const logFinder = createSPWFinder(pairAddresses)
   const Txs = block.Txs
   await mapSeries(Txs, async (tx) => {
     const txHash = tx.TxHash
@@ -27,31 +27,23 @@ export async function TxHistoryIndexer(
       const events = log.Events
 
       await mapSeries(events, async (event) => {
-        await mapSeries(logFinders, async (logFinder) => {
-          if (event.Attributes.length > 1800) return
-          const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.Attributes.length > 1800) return
+        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
-          await mapSeries(logFounds, async (logFound) => {
-            if (!logFound) return
+        await mapSeries(logFounds, async (logFound) => {
+          if (!logFound) return
+          const transformed = logFound.transformed
+          if (!transformed) return
 
-            const transformed = logFound.transformed
-
-            if (!transformed) return
-
-            const pair = pairAddresses.find((pairAddress) => pairAddress == transformed.pair)
-
-            if (!pair) return
-
-            await updateTxns(timestamp, entityManager, pair) // +1 to txns for pair, terraswap
-            if (transformed.action === 'swap') {
-              await updateVolume(entityManager, transformed, exchangeRate)
-              await updateVolume24h(entityManager, transformed, timestamp, exchangeRate)
-            } else {
-              await updateLpTokenShare(Cycle.DAY, entityManager, transformed)
-              await updateLpTokenShare(Cycle.HOUR, entityManager, transformed)
-            }
-            await addTxHistory(entityManager, timestamp, txHash, transformed)
-          })
+          await updateTxns(timestamp, entityManager, transformed.pair) // +1 to txns for pair, terraswap
+          if (transformed.action === 'swap') {
+            await updateVolume(entityManager, transformed, exchangeRate)
+            await updateVolume24h(entityManager, transformed, timestamp, exchangeRate)
+          } else {
+            await updateLpTokenShare(Cycle.DAY, entityManager, transformed)
+            await updateLpTokenShare(Cycle.HOUR, entityManager, transformed)
+          }
+          await addTxHistory(entityManager, timestamp, txHash, transformed)
         })
       })
     })

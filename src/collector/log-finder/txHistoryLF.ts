@@ -3,42 +3,48 @@ import { assetsTrimer, addMinus } from 'lib/utils'
 import { TxHistoryTransformed } from 'types'
 import * as logRules from './log-rules'
 
-export function createTxHistoryFinders(): ReturningLogFinderMapper<TxHistoryTransformed>[] {
-  return [
-    createReturningLogFinder(logRules.swapRule(), (_, match) => {
-      return {
-        pair: match[0].value,
-        action: match[1].value,
-        assets: [
+export function createSPWFinder(
+  pairAddresses: string[]
+): ReturningLogFinderMapper<TxHistoryTransformed> {
+  return createReturningLogFinder(logRules.spwRule(), (_, match) => {
+    for (const pairAddress of pairAddresses) {
+      if (match[0].value == pairAddress) {
+        const action = match[1].value
+        let assets = [
           {
-            token: match[2].value,
-            amount: match[4].value,
+            token: '',
+            amount: '',
           },
           {
-            token: match[3].value,
-            amount: addMinus(match[5].value),
+            token: '',
+            amount: '',
           },
-        ],
-        share: '0',
+        ]
+        let share = '0'
+
+        if (action == 'swap') {
+          assets[0].token = match[2].value
+          assets[0].amount = match[4].value
+          assets[1].token = match[3].value
+          assets[1].amount = addMinus(match[5].value)
+        } else if (action == 'provide_liquidity') {
+          assets = assetsTrimer(match[2].value, true)
+          share = match[3].value
+        } else if (action == 'withdraw_liquidity') {
+          assets = assetsTrimer(match[3].value, false)
+          share = match[2].value
+        }
+
+        const transformed = {
+          pair: match[0].value,
+          action: match[1].value,
+          assets,
+          share,
+        }
+
+        return transformed
       }
-    }),
-    createReturningLogFinder(logRules.provideLiquidityRule(), (_, match) => {
-      const assetsInfo = assetsTrimer(match[2].value, true)
-      return {
-        pair: match[0].value,
-        action: match[1].value,
-        assets: assetsInfo,
-        share: match[3].value,
-      }
-    }),
-    createReturningLogFinder(logRules.withdrawLiquidityRule(), (_, match) => {
-      const assetsInfo = assetsTrimer(match[3].value, false)
-      return {
-        pair: match[0].value,
-        action: match[1].value,
-        assets: assetsInfo,
-        share: match[2].value,
-      }
-    }),
-  ]
+    }
+    return
+  })
 }
