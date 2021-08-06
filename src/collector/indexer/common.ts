@@ -55,27 +55,27 @@ export async function tokenPriceAsUST(
   }
 }
 
-export async function getPairList(manager: EntityManager): Promise<string[]> {
+export async function getPairList(manager: EntityManager): Promise<Record<string, boolean>> {
   const pairInfoRepo = manager.getRepository(PairInfoEntity)
   const pairs = await pairInfoRepo.find({ select: ['pair'] })
 
-  const pairList = []
+  const pairList: Record<string, boolean> = {}
 
   for (const i of pairs) {
-    pairList.push(i.pair)
+    pairList[i.pair] = true
   }
 
   return pairList
 }
 
-export async function getTokenList(manager: EntityManager): Promise<string[]> {
+export async function getTokenList(manager: EntityManager): Promise<Record<string, boolean>> {
   const tokenInforRepo = manager.getRepository(TokenInfoEntity)
   const tokens = await tokenInforRepo.find({ select: ['tokenAddress'] })
 
-  const tokenList = []
+  const tokenList: Record<string, boolean> = {}
 
   for (const i of tokens) {
-    if (!isNative(i.tokenAddress)) tokenList.push(i.tokenAddress)
+    if (!isNative(i.tokenAddress)) tokenList[i.tokenAddress] = true
   }
 
   return tokenList

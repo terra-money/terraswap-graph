@@ -12,7 +12,7 @@ import {
 import { createSPWFinder } from '../log-finder'
 
 export async function TxHistoryIndexer(
-  pairAddresses: string[],
+  pairAddresses: Record<string, boolean>,
   entityManager: EntityManager,
   block: Block,
   exchangeRate: ExchangeRate | undefined
