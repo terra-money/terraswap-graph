@@ -10,7 +10,7 @@ interface UstPrice {
 }
 
 // get token's UST price from token-UST pair that have the largest liquidity
-export async function tokenPriceAsUST(
+export async function getTokenPriceAsUST(
   manager: EntityManager,
   token: string,
   timestamp: Date,

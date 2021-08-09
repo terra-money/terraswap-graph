@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm'
 import { PairInfoEntity, TokenInfoEntity } from 'orm'
-import { tokenOrderedWell } from 'lib/utils'
+import { isTokenOrderedWell } from 'lib/utils'
 import { getTokenInfo } from 'lib/terra'
 
 interface PairInfoTransformed {
@@ -41,11 +41,11 @@ export async function addPairInfo(
 ): Promise<PairInfoEntity> {
   const pairInfoRepo = manager.getRepository(PairInfoEntity)
 
-  const token0 = tokenOrderedWell(transformed.assets)
+  const token0 = isTokenOrderedWell(transformed.assets)
     ? transformed.assets[0]
     : transformed.assets[1]
 
-  const token1 = tokenOrderedWell(transformed.assets)
+  const token1 = isTokenOrderedWell(transformed.assets)
     ? transformed.assets[1]
     : transformed.assets[0]
 

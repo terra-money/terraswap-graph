@@ -1,5 +1,5 @@
 import { createReturningLogFinder, ReturningLogFinderMapper } from '@terra-money/log-finder'
-import { assetsTrimer, addMinus } from 'lib/utils'
+import { trimAssets, addMinus } from 'lib/utils'
 import { TxHistoryTransformed } from 'types'
 import * as logRules from './log-rules'
 
@@ -27,10 +27,10 @@ export function createSPWFinder(
         assets[1].token = match[3].value
         assets[1].amount = addMinus(match[5].value)
       } else if (action == 'provide_liquidity') {
-        assets = assetsTrimer(match[2].value, true)
+        assets = trimAssets(match[2].value, true)
         share = match[3].value
       } else if (action == 'withdraw_liquidity') {
-        assets = assetsTrimer(match[3].value, false)
+        assets = trimAssets(match[3].value, false)
         share = match[2].value
       }
 

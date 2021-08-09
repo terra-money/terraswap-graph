@@ -7,9 +7,9 @@ import {
   PairDataEntity,
   TerraswapDayDataEntity,
 } from 'orm'
-import { liquidityCompare, numberToDate } from 'lib/utils'
+import { compareLiquidity, numberToDate } from 'lib/utils'
 import { Cycle, Asset, ExchangeRate } from 'types'
-import { tokenPriceAsUST } from './common'
+import { getTokenPriceAsUST } from './common'
 
 interface Reserve {
   token0: string
@@ -18,7 +18,7 @@ interface Reserve {
   token1Reserve: string
 }
 
-export async function latestReserve(manager: EntityManager, pair: string): Promise<Reserve> {
+export async function getLatestReserve(manager: EntityManager, pair: string): Promise<Reserve> {
   const pairDataRepo = manager.getRepository(PairDayDataEntity)
 
   const recentData = await pairDataRepo.findOne({
@@ -58,7 +58,7 @@ export async function latestReserve(manager: EntityManager, pair: string): Promi
   }
 }
 
-export function addingReserve(reserve: Reserve, transformedAsset: Asset): Reserve {
+export function addReserve(reserve: Reserve, transformedAsset: Asset): Reserve {
   const token0Reserve =
     reserve.token0 === transformedAsset.token
       ? (Number(reserve.token0Reserve) + Number(transformedAsset.amount)).toString()
@@ -77,27 +77,27 @@ export function addingReserve(reserve: Reserve, transformedAsset: Asset): Reserv
   }
 }
 
-export async function liquidityUST(
+export async function getLiquidityAsUST(
   manager: EntityManager,
   tokenReserve: Reserve,
   timestamp: number,
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
-  const token0Price = await tokenPriceAsUST(
+  const token0Price = await getTokenPriceAsUST(
     manager,
     tokenReserve.token0,
     new Date(timestamp * 1000),
     exchangeRate
   )
 
-  const token1Price = await tokenPriceAsUST(
+  const token1Price = await getTokenPriceAsUST(
     manager,
     tokenReserve.token1,
     new Date(timestamp * 1000),
     exchangeRate
   )
 
-  return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
+  return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
     ? (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
     : (Number(token1Price.price) * Number(tokenReserve.token1Reserve) * 2).toString()
 }
@@ -117,12 +117,12 @@ export async function updateExchangeRate(
   })
 
   if (lastRate?.timestamp?.valueOf() === numberToDate(timestamp, Cycle.MINUTE).valueOf()) {
-    lastRate.token0Price = priceInfiniteToZero(
+    lastRate.token0Price = changeInfinitePirceToZero(
       updatedReserve.token1Reserve,
       updatedReserve.token0Reserve
     )
 
-    lastRate.token1Price = priceInfiniteToZero(
+    lastRate.token1Price = changeInfinitePirceToZero(
       updatedReserve.token0Reserve,
       updatedReserve.token1Reserve
     )
@@ -137,10 +137,16 @@ export async function updateExchangeRate(
       timestamp: numberToDate(timestamp, Cycle.MINUTE),
       pair: pair,
       token0: updatedReserve.token0,
-      token0Price: priceInfiniteToZero(updatedReserve.token1Reserve, updatedReserve.token0Reserve),
+      token0Price: changeInfinitePirceToZero(
+        updatedReserve.token1Reserve,
+        updatedReserve.token0Reserve
+      ),
       token0Reserve: updatedReserve.token0Reserve,
       token1: updatedReserve.token1,
-      token1Price: priceInfiniteToZero(updatedReserve.token0Reserve, updatedReserve.token1Reserve),
+      token1Price: changeInfinitePirceToZero(
+        updatedReserve.token0Reserve,
+        updatedReserve.token1Reserve
+      ),
       token1Reserve: updatedReserve.token1Reserve,
       liquidityUst: liquidity,
     })
@@ -212,7 +218,7 @@ async function updateReserve(
   return pairRepo.save(lastPairData)
 }
 
-function priceInfiniteToZero(number0: string, number1: string): string {
+function changeInfinitePirceToZero(number0: string, number1: string): string {
   if (number1 === '0') return '0'
   return (Number(number0) / Number(number1)).toString()
 }

@@ -4,9 +4,9 @@ import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
 import { addMinus } from 'lib/utils'
 import {
-  latestReserve,
-  addingReserve,
-  liquidityUST,
+  getLatestReserve,
+  addReserve,
+  getLiquidityAsUST,
   updateExchangeRate,
   updateReserves,
   updateTotalLiquidity,
@@ -51,9 +51,9 @@ export async function NativeTransferIndexer(
 
             if (pair == '') return
 
-            const tokenReserve = await latestReserve(entityManager, pair)
-            const updatedReserve = addingReserve(tokenReserve, transData.assets)
-            const liquidity = await liquidityUST(
+            const tokenReserve = await getLatestReserve(entityManager, pair)
+            const updatedReserve = addReserve(tokenReserve, transData.assets)
+            const liquidity = await getLiquidityAsUST(
               entityManager,
               updatedReserve,
               timestamp,
@@ -121,9 +121,12 @@ export async function NonnativeTransferIndexer(
               },
             }
 
-            const tokenReserve = await latestReserve(entityManager, transferTransformed.pairAddress)
-            const updatedReserve = addingReserve(tokenReserve, transferTransformed.assets)
-            const liquidity = await liquidityUST(
+            const tokenReserve = await getLatestReserve(
+              entityManager,
+              transferTransformed.pairAddress
+            )
+            const updatedReserve = addReserve(tokenReserve, transferTransformed.assets)
+            const liquidity = await getLiquidityAsUST(
               entityManager,
               updatedReserve,
               timestamp,

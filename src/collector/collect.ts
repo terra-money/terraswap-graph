@@ -1,6 +1,6 @@
 import { EntityManager, getManager } from 'typeorm'
 import { delay } from 'bluebird'
-import { getBlock, getLatestBlock, oracleExchangeRate } from 'lib/terra'
+import { getBlock, getLatestBlock, getOracleExchangeRate } from 'lib/terra'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { getCollectedBlock, updateBlock } from './block'
@@ -29,7 +29,9 @@ export async function collect(): Promise<void> {
     const blocks = await getBlock(i, endblock, blockCounts).catch(errorHandler)
     if (!blocks) return
 
-    const exchangeRate = await oracleExchangeRate(endblock - (endblock % 100)).catch(errorHandler)
+    const exchangeRate = await getOracleExchangeRate(endblock - (endblock % 100)).catch(
+      errorHandler
+    )
 
     if (!exchangeRate) return
 
