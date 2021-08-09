@@ -14,7 +14,7 @@ import {
 import { createNativeTransferLogFinders, createNonnativeTransferLogFinders } from '../log-finder'
 
 export async function NativeTransferIndexer(
-  pairAddresses: string[],
+  pairAddresses: Record<string, boolean>,
   entityManager: EntityManager,
   block: Block,
   exchangeRate: ExchangeRate | undefined
@@ -42,16 +42,11 @@ export async function NativeTransferIndexer(
 
           await mapSeries(transformed, async (transData) => {
             let pair = ''
-
-            for (const address of pairAddresses) {
-              if (transData.recipient == address) {
-                pair = address
-                break
-              } else if (transData.sender == address) {
-                pair = address
-                transData.assets.amount = '-' + transData.assets.amount
-                break
-              }
+            if (pairAddresses[transData.recipient]) {
+              pair = transData.recipient
+            } else if (pairAddresses[transData.sender]) {
+              pair = transData.sender
+              transData.assets.amount = '-' + transData.assets.amount
             }
 
             if (pair == '') return
@@ -77,8 +72,8 @@ export async function NativeTransferIndexer(
 }
 
 export async function NonnativeTransferIndexer(
-  pairAddresses: string[],
-  tokenAddresses: string[],
+  pairAddresses: Record<string, boolean>,
+  tokenAddresses: Record<string, boolean>,
   entityManager: EntityManager,
   block: Block,
   exchangeRate: ExchangeRate | undefined
@@ -109,7 +104,9 @@ export async function NonnativeTransferIndexer(
 
             if (!pairRelative) return
 
-            const validToken = tokenAddresses.find((token) => token == transformed.assets.token)
+            const validToken = tokenAddresses[transformed.assets.token]
+              ? transformed.assets.token
+              : undefined
 
             if (!validToken) return
 
@@ -157,11 +154,9 @@ export async function NonnativeTransferIndexer(
 
 function isPairRelative(
   transformed: NonnativeTransferTransformed,
-  pairAddresses: string[]
+  pairAddresses: Record<string, boolean>
 ): string[] | undefined {
-  for (const i of pairAddresses) {
-    if (transformed.addresses.from === i) return ['from', i]
-    if (transformed.addresses.to === i) return ['to', i]
-  }
+  if (pairAddresses[transformed.addresses.from]) return ['from', transformed.addresses.from]
+  if (pairAddresses[transformed.addresses.to]) return ['to', transformed.addresses.to]
   return
 }

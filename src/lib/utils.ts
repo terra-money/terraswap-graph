@@ -23,7 +23,7 @@ export function assetsTrimer(rawAssets: string, inflow: boolean): AssetInfo[] {
 }
 
 export function isNative(token: string): boolean {
-  return token.search(/terra1/) !== 0
+  return token.slice(0, 6) != 'terra1'
 }
 
 const tokenOrder = ['uluna', 'uusd', 'ukrw']
@@ -57,12 +57,6 @@ export function liquidityCompare(liquidity0: string, liquidity1: string): boolea
   if (liquidity0 === 'native') return true
   if (liquidity1 === 'native') return false
   return Number(liquidity0) > Number(liquidity1)
-}
-
-export function addressMatch(value: string, addressList: string[]): boolean {
-  for (const address of addressList) {
-    if (address == value) return true
-  }
 }
 
 export function rangeLimit(from: number, to: number, cycle: Cycle, limit: number): void {

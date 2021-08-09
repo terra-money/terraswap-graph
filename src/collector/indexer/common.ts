@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm'
 import { isNative } from 'lib/utils'
 import { exchangeRateToUST } from 'lib/terra'
-import { ExchangeRateEntity, PairInfoEntity, TokenInfoEntity } from 'orm'
+import { PairDayDataEntity, PairInfoEntity, TokenInfoEntity } from 'orm'
 import { ExchangeRate } from 'types'
 
 interface UstPrice {
@@ -19,33 +19,33 @@ export async function tokenPriceAsUST(
   if (isNative(token))
     return { price: await exchangeRateToUST(token, exchangeRate), liquidity: 'native' }
 
-  const ExchangeRates = await manager
+  const pairData = await manager
     .createQueryBuilder()
-    .from(ExchangeRateEntity, 'exchange')
-    .where('exchange.timestamp <= :timestamp', { timestamp: timestamp })
-    .andWhere('exchange.token_0 = :token0', { token0: 'uusd' })
-    .andWhere('exchange.token_1 = :token1', { token1: token })
-    .distinctOn(['exchange.pair'])
-    .orderBy('exchange.pair')
-    .addOrderBy('exchange.timestamp', 'DESC')
+    .from(PairDayDataEntity, 'pair')
+    .where('pair.timestamp <= :timestamp', { timestamp: timestamp })
+    .andWhere('pair.token_0 = :token0', { token0: 'uusd' })
+    .andWhere('pair.token_1 = :token1', { token1: token })
+    .distinctOn(['pair.pair'])
+    .orderBy('pair.pair')
+    .addOrderBy('pair.timestamp', 'DESC')
     .getRawMany()
 
   let largestLiquidity = [0, 0] // liquidity, index
 
-  if (ExchangeRates[0] !== undefined) {
-    for (let i = 0; i < ExchangeRates.length; i++) {
-      if (largestLiquidity[0] < ExchangeRates[i].liquidityUST)
-        largestLiquidity = [ExchangeRates[i].liquidityUST, i]
+  if (pairData[0] !== undefined) {
+    for (let i = 0; i < pairData.length; i++) {
+      if (largestLiquidity[0] < pairData[i].liquidityUST)
+        largestLiquidity = [pairData[i].liquidityUST, i]
     }
 
     const liquidityIndex = largestLiquidity[1]
 
     return {
-      price:
-        ExchangeRates[liquidityIndex].token0 === token
-          ? ExchangeRates[liquidityIndex].token0Price
-          : ExchangeRates[liquidityIndex].token1Price,
-      liquidity: ExchangeRates[liquidityIndex].liquidityUST,
+      price: (
+        Number(pairData[liquidityIndex].token_0_reserve) /
+        Number(pairData[liquidityIndex].token_1_reserve)
+      ).toString(),
+      liquidity: pairData[liquidityIndex].liquidity_ust,
     }
   } else {
     return {
@@ -55,27 +55,27 @@ export async function tokenPriceAsUST(
   }
 }
 
-export async function getPairList(manager: EntityManager): Promise<string[]> {
+export async function getPairList(manager: EntityManager): Promise<Record<string, boolean>> {
   const pairInfoRepo = manager.getRepository(PairInfoEntity)
   const pairs = await pairInfoRepo.find({ select: ['pair'] })
 
-  const pairList = []
+  const pairList: Record<string, boolean> = {}
 
   for (const i of pairs) {
-    pairList.push(i.pair)
+    pairList[i.pair] = true
   }
 
   return pairList
 }
 
-export async function getTokenList(manager: EntityManager): Promise<string[]> {
+export async function getTokenList(manager: EntityManager): Promise<Record<string, boolean>> {
   const tokenInforRepo = manager.getRepository(TokenInfoEntity)
   const tokens = await tokenInforRepo.find({ select: ['tokenAddress'] })
 
-  const tokenList = []
+  const tokenList: Record<string, boolean> = {}
 
   for (const i of tokens) {
-    if (!isNative(i.tokenAddress)) tokenList.push(i.tokenAddress)
+    if (!isNative(i.tokenAddress)) tokenList[i.tokenAddress] = true
   }
 
   return tokenList
