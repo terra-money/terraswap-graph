@@ -166,17 +166,21 @@ export async function updateReserves(
 
 export async function updateTotalLiquidity(
   manager: EntityManager
-): Promise<TerraswapDayDataEntity | void> {
+): Promise<TerraswapDayDataEntity[] | void> {
   const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
-  const lastData = await terraswapRepo.findOne({ order: { timestamp: 'DESC' } })
+  const lastData = await terraswapRepo.find({
+    order: { timestamp: 'DESC' },
+    take: 2,
+  })
+
   if (!lastData) return
 
-  const timestamp = lastData.timestamp
-  const liquidities = await manager
+  //now date
+  const toDayLiquidities = await manager
     .createQueryBuilder()
     .select('liquidity_ust')
     .from(PairDayDataEntity, 'pair')
-    .where('pair.timestamp <= :timestamp', { timestamp: timestamp })
+    .where('pair.timestamp <= :timestamp', { timestamp: lastData[0].timestamp })
     .distinctOn(['pair.pair'])
     .orderBy('pair.pair')
     .addOrderBy('pair.timestamp', 'DESC')
@@ -184,11 +188,31 @@ export async function updateTotalLiquidity(
 
   let sum = 0
 
-  for (const liquidity of liquidities) {
+  for (const liquidity of toDayLiquidities) {
     sum += Number(liquidity.liquidity_ust)
   }
 
-  lastData.totalLiquidityUst = sum.toString()
+  lastData[0].totalLiquidityUst = sum.toString()
+
+  //last date
+  const lastDayLiquidities = await manager
+    .createQueryBuilder()
+    .select('liquidity_ust')
+    .from(PairDayDataEntity, 'pair')
+    .where('pair.timestamp <= :timestamp', { timestamp: lastData[1].timestamp })
+    .distinctOn(['pair.pair'])
+    .orderBy('pair.pair')
+    .addOrderBy('pair.timestamp', 'DESC')
+    .getRawMany()
+
+  sum = 0
+
+  for (const liquidity of lastDayLiquidities) {
+    sum += Number(liquidity.liquidity_ust)
+  }
+
+  lastData[1].totalLiquidityUst = sum.toString()
+
   return terraswapRepo.save(lastData)
 }
 

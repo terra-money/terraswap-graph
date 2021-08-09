@@ -1,3 +1,4 @@
+import { ClientError } from 'graphql-request'
 import { isNative } from 'lib/utils'
 import { getContractStore } from './mantle'
 
@@ -14,5 +15,18 @@ export async function getTokenInfo(address: string): Promise<TokenInfo | undefin
     }
   }
 
-  return getContractStore<TokenInfo>(address, '{"token_info":{}}')
+  let status = 500
+  while (500 <= status && status < 600) {
+    const tokenInfo = await getContractStore<TokenInfo>(address, '{"token_info":{}}').catch(
+      (error) => error
+    )
+
+    if (tokenInfo instanceof ClientError) {
+      status = tokenInfo.response.status
+    } else {
+      return tokenInfo
+    }
+  }
+
+  return
 }

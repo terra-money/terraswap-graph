@@ -7,6 +7,7 @@ import { getCollectedBlock, updateBlock } from './block'
 import { runIndexers } from './indexer'
 import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
+import { updateTotalLiquidity } from './indexer/transferUpdater'
 
 export async function collect(): Promise<void> {
   const latestBlock = await getLatestBlock().catch(errorHandler)
@@ -17,6 +18,7 @@ export async function collect(): Promise<void> {
 
   const lastHeight = collectedBlock.height
 
+  const exManager = getManager()
   if (latestBlock === lastHeight) {
     await delay(500)
     return
@@ -36,7 +38,6 @@ export async function collect(): Promise<void> {
     if (!exchangeRate) return
 
     await getManager().transaction(async (manager: EntityManager) => {
-      logger.info(i)
       for (const block of blocks) {
         if (block.Txs[0] != undefined) {
           await runIndexers(manager, block, exchangeRate)
@@ -45,5 +46,7 @@ export async function collect(): Promise<void> {
       }
       await delete24hData(manager, new Date().valueOf())
     })
+    logger.info(`collected: ${endblock} / latest height: ${latestBlock}`)
+    await updateTotalLiquidity(exManager)
   }
 }

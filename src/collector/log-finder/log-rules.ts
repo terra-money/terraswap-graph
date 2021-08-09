@@ -33,11 +33,16 @@ export function nonnativeTransferRule(): LogFinderRule {
     type: 'from_contract',
     attributes: [
       ['contract_address'],
-      ['action', (value) => value == 'transfer' || value == 'send'],
-      ['from'],
-      ['to'],
-      ['amount'],
+      [
+        'action',
+        (value) =>
+          value == 'transfer' ||
+          value == 'send' ||
+          value == 'transfer_from' ||
+          value == 'send_from',
+      ],
     ],
+    matchUntil: 'contract_address',
   }
 }
 
