@@ -19,14 +19,14 @@ interface Reserve {
 }
 
 export async function latestReserve(manager: EntityManager, pair: string): Promise<Reserve> {
-  const exchangeRateRepo = manager.getRepository(ExchangeRateEntity)
+  const pairDataRepo = manager.getRepository(PairDayDataEntity)
 
-  const recentExchangeRate = await exchangeRateRepo.findOne({
+  const recentData = await pairDataRepo.findOne({
     where: [{ pair }],
     order: { timestamp: 'DESC' },
   })
 
-  if (!recentExchangeRate) {
+  if (!recentData) {
     const pairInfoRepo = manager.getRepository(PairInfoEntity)
 
     const pairInfo = await pairInfoRepo.findOne({
@@ -51,10 +51,10 @@ export async function latestReserve(manager: EntityManager, pair: string): Promi
   }
 
   return {
-    token0: recentExchangeRate.token0,
-    token0Reserve: recentExchangeRate.token0Reserve,
-    token1: recentExchangeRate.token1,
-    token1Reserve: recentExchangeRate.token1Reserve,
+    token0: recentData.token0,
+    token0Reserve: recentData.token0Reserve,
+    token1: recentData.token1,
+    token1Reserve: recentData.token1Reserve,
   }
 }
 
