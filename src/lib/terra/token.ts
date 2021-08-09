@@ -15,18 +15,17 @@ export async function getTokenInfo(address: string): Promise<TokenInfo | undefin
     }
   }
 
-  let status = 500
-  while (500 <= status && status < 600) {
-    const tokenInfo = await getContractStore<TokenInfo>(address, '{"token_info":{}}').catch(
-      (error) => error
-    )
+  const tokenInfo = await getContractStore<TokenInfo>(address, '{"token_info":{}}').catch(
+    (error) => error
+  )
 
-    if (tokenInfo instanceof ClientError) {
-      status = tokenInfo.response.status
-    } else {
-      return tokenInfo
+  if (tokenInfo instanceof ClientError) {
+    if (tokenInfo.response?.status === 200) {
+      return undefined
     }
-  }
 
-  return
+    throw tokenInfo
+  } else {
+    return tokenInfo
+  }
 }

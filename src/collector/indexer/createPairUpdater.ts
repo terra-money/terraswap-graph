@@ -21,7 +21,7 @@ export async function addTokenInfo(
     // new one
     const tokenInfoFromBlockData = await getTokenInfo(tokenAddress)
 
-    if (!getTokenInfo) return
+    if (!tokenInfoFromBlockData) return
 
     const tokenInfo = new TokenInfoEntity({
       tokenAddress,
