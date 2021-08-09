@@ -9,8 +9,8 @@ import {
   Recent24hEntity,
 } from 'orm'
 import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
-import { isNative, addMinus, numberToDate, tokenOrderedWell } from 'lib/utils'
-import { tokenPriceAsUST } from './common'
+import { isNative, addMinus, numberToDate, isTokenOrderedWell, compareLiquidity } from 'lib/utils'
+import { getTokenPriceAsUST } from './common'
 
 export async function updateTxns(
   timestamp: number,
@@ -40,7 +40,10 @@ export async function updateVolume24h(
 ): Promise<void> {
   const recent24hRepo = manager.getRepository(Recent24hEntity)
 
-  const isRightOrder = tokenOrderedWell([transformed.assets[0].token, transformed.assets[1].token])
+  const isRightOrder = isTokenOrderedWell([
+    transformed.assets[0].token,
+    transformed.assets[1].token,
+  ])
   await recent24hRepo.save(
     new Recent24hEntity({
       pair: transformed.pair,
@@ -53,7 +56,12 @@ export async function updateVolume24h(
       token1Volume: isRightOrder
         ? Math.abs(Number(transformed.assets[1].amount)).toString()
         : Math.abs(Number(transformed.assets[0].amount)).toString(),
-      volumeUst: await volumeToUST(manager, new Date(timestamp * 1000), transformed, exchangeRate),
+      volumeUst: await changeVolumeAsUST(
+        manager,
+        new Date(timestamp * 1000),
+        transformed,
+        exchangeRate
+      ),
     })
   )
 }
@@ -66,7 +74,10 @@ export async function addTxHistory(
 ): Promise<TxHistoryEntity> {
   const txHistoryRepo = manager.getRepository(TxHistoryEntity)
 
-  const isRightOrder = tokenOrderedWell([transformed.assets[0].token, transformed.assets[1].token])
+  const isRightOrder = isTokenOrderedWell([
+    transformed.assets[0].token,
+    transformed.assets[1].token,
+  ])
 
   const txHistory = new TxHistoryEntity({
     timestamp: new Date(timestamp * 1000),
@@ -227,7 +238,10 @@ async function updatePairVolume(
 
   if (!lastData) return
 
-  const isRightOrder = tokenOrderedWell([transformed.assets[0].token, transformed.assets[1].token])
+  const isRightOrder = isTokenOrderedWell([
+    transformed.assets[0].token,
+    transformed.assets[1].token,
+  ])
 
   lastData.token0Volume = (
     Number(lastData.token0Volume) +
@@ -239,14 +253,19 @@ async function updatePairVolume(
     Math.abs(Number(isRightOrder ? transformed.assets[1].amount : transformed.assets[0].amount))
   ).toString()
 
-  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
+  const newVolumeUST = await changeVolumeAsUST(
+    manager,
+    lastData.timestamp,
+    transformed,
+    exchangeRate
+  )
 
   lastData.volumeUst = (Number(lastData.volumeUst) + Number(newVolumeUST)).toString()
 
   return pairRepo.save(lastData)
 }
 
-async function volumeToUST(
+async function changeVolumeAsUST(
   manager: EntityManager,
   timestamp: Date,
   transformed: TxHistoryTransformed,
@@ -261,7 +280,7 @@ async function volumeToUST(
 
   //case2. both are native: use asset0
   else if (isNative(transformed.assets[0].token) && isNative(transformed.assets[1].token)) {
-    const token0Price = await tokenPriceAsUST(
+    const token0Price = await getTokenPriceAsUST(
       manager,
       transformed.assets[0].token,
       timestamp,
@@ -275,7 +294,7 @@ async function volumeToUST(
   else if (isNative(transformed.assets[0].token) && isNative(transformed.assets[1].token)) {
     const nativeTokenIndex = isNative(transformed.assets[0].token) ? 0 : 1
 
-    const tokenPrice = await tokenPriceAsUST(
+    const tokenPrice = await getTokenPriceAsUST(
       manager,
       transformed.assets[nativeTokenIndex].token,
       timestamp,
@@ -289,30 +308,24 @@ async function volumeToUST(
 
   //case4. both are non-native
   else {
-    const token0Price = await tokenPriceAsUST(
+    const token0Price = await getTokenPriceAsUST(
       manager,
       transformed.assets[0].token,
       timestamp,
       exchangeRate
     )
 
-    const token1Price = await tokenPriceAsUST(
+    const token1Price = await getTokenPriceAsUST(
       manager,
       transformed.assets[1].token,
       timestamp,
       exchangeRate
     )
 
-    return liquidityCompare(token0Price.liquidity, token1Price.liquidity)
+    return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
       ? Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
       : Math.abs(Number(token1Price.price) * Number(transformed.assets[1].amount)).toString()
   }
-}
-
-function liquidityCompare(liquidity0: string, liquidity1: string) {
-  if (liquidity0 === 'native') return true
-  if (liquidity1 === 'native') return false
-  return Number(liquidity0) > Number(liquidity1)
 }
 
 async function updateTerraswapVolume(
@@ -328,7 +341,12 @@ async function updateTerraswapVolume(
 
   if (!lastData) return
 
-  const newVolumeUST = await volumeToUST(manager, lastData.timestamp, transformed, exchangeRate)
+  const newVolumeUST = await changeVolumeAsUST(
+    manager,
+    lastData.timestamp,
+    transformed,
+    exchangeRate
+  )
 
   lastData.volumeUst = (Number(lastData.volumeUst) + Number(newVolumeUST)).toString()
 

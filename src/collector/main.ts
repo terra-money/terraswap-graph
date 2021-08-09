@@ -14,6 +14,7 @@ global.Promise = bluebird as any // eslint-disable-line
 async function loop(): Promise<void> {
   for (;;) {
     await collect()
+    await bluebird.delay(500)
   }
 }
 

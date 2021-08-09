@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm'
+import { EntityManager, LessThanOrEqual } from 'typeorm'
 import { isNative } from 'lib/utils'
 import { exchangeRateToUST } from 'lib/terra'
 import { PairDayDataEntity, PairInfoEntity, TokenInfoEntity } from 'orm'
@@ -10,7 +10,7 @@ interface UstPrice {
 }
 
 // get token's UST price from token-UST pair that have the largest liquidity
-export async function tokenPriceAsUST(
+export async function getTokenPriceAsUST(
   manager: EntityManager,
   token: string,
   timestamp: Date,
@@ -19,33 +19,44 @@ export async function tokenPriceAsUST(
   if (isNative(token))
     return { price: await exchangeRateToUST(token, exchangeRate), liquidity: 'native' }
 
-  const pairData = await manager
-    .createQueryBuilder()
-    .from(PairDayDataEntity, 'pair')
-    .where('pair.timestamp <= :timestamp', { timestamp: timestamp })
-    .andWhere('pair.token_0 = :token0', { token0: 'uusd' })
-    .andWhere('pair.token_1 = :token1', { token1: token })
-    .distinctOn(['pair.pair'])
-    .orderBy('pair.pair')
-    .addOrderBy('pair.timestamp', 'DESC')
-    .getRawMany()
+  const pairInfoRepo = manager.getRepository(PairInfoEntity)
+  const pairDayDataRepo = manager.getRepository(PairDayDataEntity)
+  const matchedPair = await pairInfoRepo.find({
+    where: { token0: 'uusd', token1: token },
+  })
 
   let largestLiquidity = [0, 0] // liquidity, index
 
-  if (pairData[0] !== undefined) {
+  if (matchedPair[0] !== undefined) {
+    const pairData = []
+    for (const pair of matchedPair) {
+      const data = await pairDayDataRepo.findOne({
+        where: { pair: pair.pair, timestamp: LessThanOrEqual(timestamp) },
+        order: { timestamp: 'DESC' },
+      })
+      pairData.push(data)
+    }
+
+    if (pairData[0] == undefined) {
+      return {
+        price: '0',
+        liquidity: '0',
+      }
+    }
+
     for (let i = 0; i < pairData.length; i++) {
-      if (largestLiquidity[0] < pairData[i].liquidityUST)
-        largestLiquidity = [pairData[i].liquidityUST, i]
+      if (largestLiquidity[0] < Number(pairData[i].liquidityUst))
+        largestLiquidity = [Number(pairData[i].liquidityUst), i]
     }
 
     const liquidityIndex = largestLiquidity[1]
 
     return {
       price: (
-        Number(pairData[liquidityIndex].token_0_reserve) /
-        Number(pairData[liquidityIndex].token_1_reserve)
+        Number(pairData[liquidityIndex].token0Reserve) /
+        Number(pairData[liquidityIndex].token1Reserve)
       ).toString(),
-      liquidity: pairData[liquidityIndex].liquidity_ust,
+      liquidity: pairData[liquidityIndex].liquidityUst,
     }
   } else {
     return {

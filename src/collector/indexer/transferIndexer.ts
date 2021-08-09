@@ -4,14 +4,13 @@ import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
 import { addMinus } from 'lib/utils'
 import {
-  latestReserve,
-  addingReserve,
-  liquidityUST,
+  getLatestReserve,
+  addReserve,
+  getLiquidityAsUST,
   updateExchangeRate,
   updateReserves,
-  updateTotalLiquidity,
 } from './transferUpdater'
-import { createNativeTransferLogFinders, createNonnativeTransferLogFinders } from '../log-finder'
+import { createNativeTransferLogFinders, createNonnativeTransferLogFinder } from '../log-finder'
 
 export async function NativeTransferIndexer(
   pairAddresses: Record<string, boolean>,
@@ -51,9 +50,9 @@ export async function NativeTransferIndexer(
 
             if (pair == '') return
 
-            const tokenReserve = await latestReserve(entityManager, pair)
-            const updatedReserve = addingReserve(tokenReserve, transData.assets)
-            const liquidity = await liquidityUST(
+            const tokenReserve = await getLatestReserve(entityManager, pair)
+            const updatedReserve = addReserve(tokenReserve, transData.assets)
+            const liquidity = await getLiquidityAsUST(
               entityManager,
               updatedReserve,
               timestamp,
@@ -68,7 +67,6 @@ export async function NativeTransferIndexer(
       })
     })
   })
-  await updateTotalLiquidity(entityManager)
 }
 
 export async function NonnativeTransferIndexer(
@@ -78,7 +76,7 @@ export async function NonnativeTransferIndexer(
   block: Block,
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
-  const logFinders = createNonnativeTransferLogFinders()
+  const logFinder = createNonnativeTransferLogFinder()
   const Txs = block.Txs
 
   await mapSeries(Txs, async (tx) => {
@@ -89,67 +87,67 @@ export async function NonnativeTransferIndexer(
       const events = log.Events
 
       await mapSeries(events, async (event) => {
-        await mapSeries(logFinders, async (logFinder) => {
-          if (event.Attributes.length > 1800) return
-          const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.Attributes.length > 1800) return
+        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
 
-          await mapSeries(logFounds, async (logFound) => {
-            if (!logFound) return
+        await mapSeries(logFounds, async (logFound) => {
+          if (!logFound) return
 
-            const transformed = logFound.transformed
+          const transformed = logFound.transformed
 
-            if (!transformed) return
+          if (!transformed) return
 
-            const pairRelative = isPairRelative(transformed, pairAddresses)
+          const pairRelative = isPairRelative(transformed, pairAddresses)
 
-            if (!pairRelative) return
+          if (!pairRelative) return
 
-            const validToken = tokenAddresses[transformed.assets.token]
-              ? transformed.assets.token
-              : undefined
+          const validToken = tokenAddresses[transformed.assets.token]
+            ? transformed.assets.token
+            : undefined
 
-            if (!validToken) return
+          if (!validToken) return
 
-            const transferTransformed = {
-              pairAddress: pairRelative[1],
-              assets: {
-                token: transformed.assets.token,
-                amount:
-                  pairRelative[0] === 'to'
-                    ? transformed.assets.amount
-                    : addMinus(transformed.assets.amount),
-              },
-            }
+          const transferTransformed = {
+            pairAddress: pairRelative[1],
+            assets: {
+              token: transformed.assets.token,
+              amount:
+                pairRelative[0] === 'to'
+                  ? transformed.assets.amount
+                  : addMinus(transformed.assets.amount),
+            },
+          }
 
-            const tokenReserve = await latestReserve(entityManager, transferTransformed.pairAddress)
-            const updatedReserve = addingReserve(tokenReserve, transferTransformed.assets)
-            const liquidity = await liquidityUST(
-              entityManager,
-              updatedReserve,
-              timestamp,
-              exchangeRate
-            )
+          const tokenReserve = await getLatestReserve(
+            entityManager,
+            transferTransformed.pairAddress
+          )
+          const updatedReserve = addReserve(tokenReserve, transferTransformed.assets)
+          const liquidity = await getLiquidityAsUST(
+            entityManager,
+            updatedReserve,
+            timestamp,
+            exchangeRate
+          )
 
-            await updateExchangeRate(
-              entityManager,
-              updatedReserve,
-              liquidity,
-              timestamp,
-              transferTransformed.pairAddress
-            )
+          await updateExchangeRate(
+            entityManager,
+            updatedReserve,
+            liquidity,
+            timestamp,
+            transferTransformed.pairAddress
+          )
 
-            await updateReserves(
-              entityManager,
-              updatedReserve,
-              liquidity,
-              transferTransformed.pairAddress
-            )
-          })
+          await updateReserves(
+            entityManager,
+            updatedReserve,
+            liquidity,
+            transferTransformed.pairAddress
+          )
         })
       })
     })
   })
-  await updateTotalLiquidity(entityManager)
 }
 
 function isPairRelative(

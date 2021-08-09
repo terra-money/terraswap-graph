@@ -9,7 +9,7 @@ export function addMinus(n: string): string {
   return '-' + n
 }
 
-export function assetsTrimer(rawAssets: string, inflow: boolean): AssetInfo[] {
+export function trimAssets(rawAssets: string, inflow: boolean): AssetInfo[] {
   const assets = rawAssets.split(',').map((e) => e.trim())
   return assets
     .map((e) => {
@@ -28,7 +28,7 @@ export function isNative(token: string): boolean {
 
 const tokenOrder = ['uluna', 'uusd', 'ukrw']
 
-export function tokenOrderedWell(tokens: string[]): boolean {
+export function isTokenOrderedWell(tokens: string[]): boolean {
   const token0 = tokens[0]
   const token1 = tokens[1]
   for (const token of tokenOrder) {
@@ -53,7 +53,7 @@ export function dateToNumber(timestamp: Date): number {
   return parseInt(stringTime)
 }
 
-export function liquidityCompare(liquidity0: string, liquidity1: string): boolean {
+export function compareLiquidity(liquidity0: string, liquidity1: string): boolean {
   if (liquidity0 === 'native') return true
   if (liquidity1 === 'native') return false
   return Number(liquidity0) > Number(liquidity1)
