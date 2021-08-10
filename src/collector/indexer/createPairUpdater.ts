@@ -10,6 +10,7 @@ interface PairInfoTransformed {
 }
 
 export async function addTokenInfo(
+  tokenList: Record<string, boolean>,
   manager: EntityManager,
   tokenAddress: string,
   newPair: string
@@ -21,7 +22,7 @@ export async function addTokenInfo(
     // new one
     const tokenInfoFromBlockData = await getTokenInfo(tokenAddress)
 
-    if (!tokenInfoFromBlockData) return
+    tokenList[tokenAddress] = true
 
     const tokenInfo = new TokenInfoEntity({
       tokenAddress,
@@ -38,10 +39,13 @@ export async function addTokenInfo(
 }
 
 export async function addPairInfo(
+  pairList: Record<string, boolean>,
   manager: EntityManager,
   transformed: PairInfoTransformed
 ): Promise<PairInfoEntity> {
   const pairInfoRepo = manager.getRepository(PairInfoEntity)
+
+  pairList[transformed.pairAddress] = true
 
   const token0 = isTokenOrderedWell(transformed.assets)
     ? transformed.assets[0]

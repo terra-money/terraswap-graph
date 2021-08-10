@@ -3,17 +3,16 @@ import { Block, ExchangeRate } from 'types'
 import { CreatePairIndexer } from './createPairIndexer'
 import { TxHistoryIndexer } from './txHistoryIndexer'
 import { NonnativeTransferIndexer, NativeTransferIndexer } from './transferIndexer'
-import { getPairList, getTokenList } from './common'
 
 export async function runIndexers(
   manager: EntityManager,
   block: Block,
-  exchangeRate: ExchangeRate | undefined
+  exchangeRate: ExchangeRate | undefined,
+  pairList: Record<string, boolean>,
+  tokenList: Record<string, boolean>
 ): Promise<void> {
-  await CreatePairIndexer(manager, block)
-  const pairs = await getPairList(manager)
-  const tokens = await getTokenList(manager)
-  await TxHistoryIndexer(pairs, manager, block, exchangeRate)
-  await NativeTransferIndexer(pairs, manager, block, exchangeRate)
-  await NonnativeTransferIndexer(pairs, tokens, manager, block, exchangeRate)
+  await CreatePairIndexer(pairList, tokenList, manager, block)
+  await TxHistoryIndexer(pairList, manager, block, exchangeRate)
+  await NativeTransferIndexer(pairList, manager, block, exchangeRate)
+  await NonnativeTransferIndexer(pairList, tokenList, manager, block, exchangeRate)
 }

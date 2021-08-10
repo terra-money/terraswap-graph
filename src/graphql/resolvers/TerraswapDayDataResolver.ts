@@ -15,7 +15,7 @@ export class TerraswapDayDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<TerraswapDay[]> {
-    rangeLimit(from, to, 1, Cycle.DAY, 500)
+    rangeLimit(from, to, Cycle.DAY, 500)
     return this.terraswapServie.getTerraswapData(from, to)
   }
 }
