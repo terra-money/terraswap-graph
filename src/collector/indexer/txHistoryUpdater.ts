@@ -291,7 +291,7 @@ async function changeVolumeAsUST(
   }
 
   //case3. only one is native
-  else if (isNative(transformed.assets[0].token) && isNative(transformed.assets[1].token)) {
+  else if (isNative(transformed.assets[0].token) || isNative(transformed.assets[1].token)) {
     const nativeTokenIndex = isNative(transformed.assets[0].token) ? 0 : 1
 
     const tokenPrice = await getTokenPriceAsUST(

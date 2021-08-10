@@ -9,7 +9,10 @@ import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
 import { updateTotalLiquidity } from './indexer/transferUpdater'
 
-export async function collect(): Promise<void> {
+export async function collect(
+  pairList: Record<string, boolean>,
+  tokenList: Record<string, boolean>
+): Promise<void> {
   const latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
@@ -40,7 +43,7 @@ export async function collect(): Promise<void> {
     await getManager().transaction(async (manager: EntityManager) => {
       for (const block of blocks) {
         if (block.Txs[0] != undefined) {
-          await runIndexers(manager, block, exchangeRate)
+          await runIndexers(manager, block, exchangeRate, pairList, tokenList)
           await updateBlock(collectedBlock, block.Txs[0].Height, manager.getRepository(BlockEntity))
         }
       }

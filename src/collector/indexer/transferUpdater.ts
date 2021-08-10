@@ -7,7 +7,7 @@ import {
   PairDataEntity,
   TerraswapDayDataEntity,
 } from 'orm'
-import { compareLiquidity, numberToDate } from 'lib/utils'
+import { compareLiquidity, numberToDate, isNative } from 'lib/utils'
 import { Cycle, Asset, ExchangeRate } from 'types'
 import { getTokenPriceAsUST } from './common'
 
@@ -83,23 +83,61 @@ export async function getLiquidityAsUST(
   timestamp: number,
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
-  const token0Price = await getTokenPriceAsUST(
-    manager,
-    tokenReserve.token0,
-    new Date(timestamp * 1000),
-    exchangeRate
-  )
+  //case1. uusd exist
+  if (tokenReserve.token0 == 'uusd' || tokenReserve.token1 == 'uusd') {
+    return tokenReserve.token0 == 'uusd'
+      ? (Number(tokenReserve.token0Reserve) * 2).toString()
+      : (Number(tokenReserve.token1Reserve) * 2).toString()
+  }
 
-  const token1Price = await getTokenPriceAsUST(
-    manager,
-    tokenReserve.token1,
-    new Date(timestamp * 1000),
-    exchangeRate
-  )
+  //case2. both are native: use asset0
+  else if (isNative(tokenReserve.token0) && isNative(tokenReserve.token1)) {
+    const token0Price = await getTokenPriceAsUST(
+      manager,
+      tokenReserve.token0,
+      new Date(timestamp * 1000),
+      exchangeRate
+    )
 
-  return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
-    ? (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
-    : (Number(token1Price.price) * Number(tokenReserve.token1Reserve) * 2).toString()
+    return (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
+  }
+
+  //case3. only one is native
+  else if (isNative(tokenReserve.token0) || isNative(tokenReserve.token1)) {
+    const nativeTokenIndex = isNative(tokenReserve.token0) ? 0 : 1
+
+    const tokenPrice = await getTokenPriceAsUST(
+      manager,
+      nativeTokenIndex == 0 ? tokenReserve.token0 : tokenReserve.token1,
+      new Date(timestamp * 1000),
+      exchangeRate
+    )
+
+    const reserve = nativeTokenIndex == 0 ? tokenReserve.token0Reserve : tokenReserve.token1Reserve
+
+    return (Number(tokenPrice.price) * Number(reserve) * 2).toString()
+  }
+
+  //case4. both are non-native
+  else {
+    const token0Price = await getTokenPriceAsUST(
+      manager,
+      tokenReserve.token0,
+      new Date(timestamp * 1000),
+      exchangeRate
+    )
+
+    const token1Price = await getTokenPriceAsUST(
+      manager,
+      tokenReserve.token1,
+      new Date(timestamp * 1000),
+      exchangeRate
+    )
+
+    return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
+      ? (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
+      : (Number(token1Price.price) * Number(tokenReserve.token1Reserve) * 2).toString()
+  }
 }
 
 export async function updateExchangeRate(
@@ -173,7 +211,7 @@ export async function updateTotalLiquidity(
     take: 2,
   })
 
-  if (!lastData) return
+  if (!lastData[0]) return undefined
 
   //now date
   const toDayLiquidities = await manager
@@ -194,24 +232,26 @@ export async function updateTotalLiquidity(
 
   lastData[0].totalLiquidityUst = sum.toString()
 
-  //last date
-  const lastDayLiquidities = await manager
-    .createQueryBuilder()
-    .select('liquidity_ust')
-    .from(PairDayDataEntity, 'pair')
-    .where('pair.timestamp <= :timestamp', { timestamp: lastData[1].timestamp })
-    .distinctOn(['pair.pair'])
-    .orderBy('pair.pair')
-    .addOrderBy('pair.timestamp', 'DESC')
-    .getRawMany()
+  if (lastData[1]) {
+    //last date
+    const lastDayLiquidities = await manager
+      .createQueryBuilder()
+      .select('liquidity_ust')
+      .from(PairDayDataEntity, 'pair')
+      .where('pair.timestamp <= :timestamp', { timestamp: lastData[1].timestamp })
+      .distinctOn(['pair.pair'])
+      .orderBy('pair.pair')
+      .addOrderBy('pair.timestamp', 'DESC')
+      .getRawMany()
 
-  sum = 0
+    sum = 0
 
-  for (const liquidity of lastDayLiquidities) {
-    sum += Number(liquidity.liquidity_ust)
+    for (const liquidity of lastDayLiquidities) {
+      sum += Number(liquidity.liquidity_ust)
+    }
+
+    lastData[1].totalLiquidityUst = sum.toString()
   }
-
-  lastData[1].totalLiquidityUst = sum.toString()
 
   return terraswapRepo.save(lastData)
 }
