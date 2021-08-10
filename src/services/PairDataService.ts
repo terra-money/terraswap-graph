@@ -1,11 +1,12 @@
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { PairDayDataEntity, PairHourDataEntity } from 'orm'
+import { PairDataEntity, PairDayDataEntity, PairHourDataEntity } from 'orm'
 import { dateToNumber, numberToDate } from 'lib/utils'
 import { Cycle } from 'types'
 import { TokenService } from './TokenService'
 import { PairData, PairHistoricalData } from 'graphql/schema'
+import { num } from 'lib/num'
 
 @Service()
 export class PairDataService {
@@ -18,6 +19,10 @@ export class PairDataService {
   async getPairData(pair: string, hourRepo = this.hourRepo): Promise<void | Partial<PairData>> {
     const repo = hourRepo
 
+    const now = new Date()
+    const recent = new Date(now.valueOf() - 3.6e6)
+    const sevenDaysBefore = new Date(recent.valueOf() - 6.048e8)
+
     const latest = await repo.findOne({
       where: { pair },
       order: { timestamp: 'DESC' },
@@ -25,15 +30,33 @@ export class PairDataService {
 
     if (!latest) return
 
+    const recentData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(recent) },
+      order: { timestamp: 'DESC' },
+    })
+
+    const sevenDaysBeforeData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(sevenDaysBefore) },
+      order: { timestamp: 'DESC' },
+    })
+
     const token0 = await this.tokenService.getTokenInfo(latest.token0)
     const token1 = await this.tokenService.getTokenInfo(latest.token1)
+    let commissionAPR = num(0)
+    //least need 7 days data
+    if (sevenDaysBeforeData) {
+      const recentValue = getLpTokenValue(recentData)
+      const oldValue = getLpTokenValue(sevenDaysBeforeData)
+      commissionAPR = recentValue.minus(oldValue).multipliedBy(52.142857142857143).div(oldValue)
+    }
 
     return {
       pairAddress: pair,
       token0,
       token1,
-      latestToken0Price: (Number(latest.token1Reserve) / Number(latest.token0Reserve)).toFixed(10),
-      latestToken1Price: (Number(latest.token0Reserve) / Number(latest.token1Reserve)).toFixed(10),
+      commissionAPR: commissionAPR.toString(),
+      latestToken0Price: num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10),
+      latestToken1Price: num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10),
     }
   }
 
@@ -86,8 +109,8 @@ export class PairDataService {
 
         pairHistory.push({
           timestamp: indexTimestamp,
-          token0Price: (Number(tick.token1Reserve) / Number(tick.token0Reserve)).toFixed(10),
-          token1Price: (Number(tick.token0Reserve) / Number(tick.token1Reserve)).toFixed(10),
+          token0Price: num(tick.token1Reserve).div(tick.token0Reserve).toFixed(10),
+          token1Price: num(tick.token0Reserve).div(tick.token1Reserve).toFixed(10),
           token0Volume: isSameTick ? tick.token0Volume : '0',
           token1Volume: isSameTick ? tick.token1Volume : '0',
           token0Reserve: tick.token0Reserve,
@@ -107,4 +130,11 @@ export class PairDataService {
 
 export function pairDataService(): PairDataService {
   return Container.get(PairDataService)
+}
+
+function getLpTokenValue(data: PairDataEntity) {
+  const token0Amount = num(data.token0Reserve)
+  const token1Amount = num(data.token1Reserve)
+  const totalLpTokenShare = num(data.totalLpTokenShare)
+  return token0Amount.multipliedBy(token1Amount).squareRoot().div(totalLpTokenShare)
 }

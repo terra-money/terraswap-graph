@@ -3,6 +3,7 @@ import { isNative } from 'lib/utils'
 import { exchangeRateToUST } from 'lib/terra'
 import { PairDayDataEntity, PairInfoEntity, TokenInfoEntity } from 'orm'
 import { ExchangeRate } from 'types'
+import { num } from 'lib/num'
 
 interface UstPrice {
   price: string
@@ -52,10 +53,9 @@ export async function getTokenPriceAsUST(
     const liquidityIndex = largestLiquidity[1]
 
     return {
-      price: (
-        Number(pairData[liquidityIndex].token0Reserve) /
-        Number(pairData[liquidityIndex].token1Reserve)
-      ).toString(),
+      price: num(pairData[liquidityIndex].token0Reserve)
+        .div(pairData[liquidityIndex].token1Reserve)
+        .toString(),
       liquidity: pairData[liquidityIndex].liquidityUst,
     }
   } else {

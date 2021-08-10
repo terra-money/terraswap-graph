@@ -11,6 +11,7 @@ import {
 import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
 import { isNative, addMinus, numberToDate, isTokenOrderedWell, compareLiquidity } from 'lib/utils'
 import { getTokenPriceAsUST } from './common'
+import { num } from 'lib/num'
 
 export async function updateTxns(
   timestamp: number,
@@ -287,7 +288,7 @@ async function changeVolumeAsUST(
       exchangeRate
     )
 
-    return Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
+    return num(token0Price.price).multipliedBy(transformed.assets[0].amount).abs().toString()
   }
 
   //case3. only one is native
@@ -301,9 +302,10 @@ async function changeVolumeAsUST(
       exchangeRate
     )
 
-    return Math.abs(
-      Number(tokenPrice.price) * Number(transformed.assets[nativeTokenIndex].amount)
-    ).toString()
+    return num(tokenPrice.price)
+      .multipliedBy(transformed.assets[nativeTokenIndex].amount)
+      .abs()
+      .toString()
   }
 
   //case4. both are non-native
@@ -323,8 +325,8 @@ async function changeVolumeAsUST(
     )
 
     return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
-      ? Math.abs(Number(token0Price.price) * Number(transformed.assets[0].amount)).toString()
-      : Math.abs(Number(token1Price.price) * Number(transformed.assets[1].amount)).toString()
+      ? num(token0Price.price).multipliedBy(transformed.assets[0].amount).abs().toString()
+      : num(token1Price.price).multipliedBy(transformed.assets[1].amount).abs().toString()
   }
 }
 

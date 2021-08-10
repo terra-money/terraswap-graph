@@ -1,4 +1,5 @@
 import { delay } from 'bluebird'
+import { num } from 'lib/num'
 import fetch from 'node-fetch'
 import { ExchangeRate } from 'types'
 
@@ -49,5 +50,5 @@ export async function exchangeRateToUST(
   if (denom === 'uusd') return '1'
   const uusdRate = exchangeRate.result.filter((e) => e.denom === 'uusd')[0].amount
   const targetDenomRate = exchangeRate.result.filter((e) => e.denom === denom)[0].amount
-  return (Number(uusdRate) / Number(targetDenomRate)).toString()
+  return num(uusdRate).div(targetDenomRate).toString()
 }
