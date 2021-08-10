@@ -18,6 +18,9 @@ export class PairData {
   @Field()
   latestToken1Price: string
 
+  @Field()
+  commissionAPR: string
+
   @Field((type) => [PairHistoricalData])
   historicalData: PairHistoricalData[]
 }

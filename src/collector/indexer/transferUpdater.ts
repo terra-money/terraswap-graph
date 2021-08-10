@@ -10,6 +10,7 @@ import {
 import { compareLiquidity, numberToDate, isNative } from 'lib/utils'
 import { Cycle, Asset, ExchangeRate } from 'types'
 import { getTokenPriceAsUST } from './common'
+import { num } from 'lib/num'
 
 interface Reserve {
   token0: string
@@ -99,7 +100,10 @@ export async function getLiquidityAsUST(
       exchangeRate
     )
 
-    return (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
+    return num(token0Price.price)
+      .multipliedBy(tokenReserve.token0Reserve)
+      .multipliedBy(2)
+      .toString()
   }
 
   //case3. only one is native
@@ -115,7 +119,7 @@ export async function getLiquidityAsUST(
 
     const reserve = nativeTokenIndex == 0 ? tokenReserve.token0Reserve : tokenReserve.token1Reserve
 
-    return (Number(tokenPrice.price) * Number(reserve) * 2).toString()
+    return num(tokenPrice.price).multipliedBy(reserve).multipliedBy(2).toString()
   }
 
   //case4. both are non-native
@@ -135,8 +139,8 @@ export async function getLiquidityAsUST(
     )
 
     return compareLiquidity(token0Price.liquidity, token1Price.liquidity)
-      ? (Number(token0Price.price) * Number(tokenReserve.token0Reserve) * 2).toString()
-      : (Number(token1Price.price) * Number(tokenReserve.token1Reserve) * 2).toString()
+      ? num(token0Price.price).multipliedBy(tokenReserve.token0Reserve).multipliedBy(2).toString()
+      : num(token1Price.price).multipliedBy(tokenReserve.token1Reserve).multipliedBy(2).toString()
   }
 }
 
@@ -284,5 +288,5 @@ async function updateReserve(
 
 function changeInfinitePirceToZero(number0: string, number1: string): string {
   if (number1 === '0') return '0'
-  return (Number(number0) / Number(number1)).toString()
+  return num(number0).div(number1).toString()
 }

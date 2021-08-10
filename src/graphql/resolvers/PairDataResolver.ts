@@ -19,14 +19,14 @@ export class PairDataResolver {
 
   @FieldResolver((type) => [PairHistoricalData])
   async historicalData(
-    @Root() pairDayData: PairData,
+    @Root() pairData: PairData,
     @Arg('interval', (type) => Interval, { description: 'day or hour' }) interval: Interval,
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairHistoricalData[]> {
     const cycle = interval == Interval.DAY ? Cycle.DAY : Cycle.HOUR
     rangeLimit(from, to, cycle, 500)
-    const pair = pairDayData.pairAddress
+    const pair = pairData.pairAddress
     const data = await this.pairDataService.getHistoricalData(pair, from, to, cycle)
     if (!data) throw new Error('there are no transactions of this pair')
     return data

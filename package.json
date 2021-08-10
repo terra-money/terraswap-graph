@@ -19,6 +19,7 @@
     "@terra-money/log-finder": "^1.1.4",
     "@types/eslint": "^7.28.0",
     "apollo-server-koa": "^3.0.2",
+    "bignumber.js": "^9.0.1",
     "bluebird": "^3.7.2",
     "date-fns-timezone": "^0.1.4",
     "graphql-request": "^3.4.0",
