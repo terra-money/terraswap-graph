@@ -7,10 +7,9 @@ import {
   PairDataEntity,
   TerraswapDayDataEntity,
 } from 'orm'
-import { compareLiquidity, numberToDate } from 'lib/utils'
+import { compareLiquidity, numberToDate, isNative } from 'lib/utils'
 import { Cycle, Asset, ExchangeRate } from 'types'
 import { getTokenPriceAsUST } from './common'
-import { isNative } from 'lodash'
 
 interface Reserve {
   token0: string
