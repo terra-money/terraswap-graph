@@ -2,6 +2,19 @@ import { ObjectType, Field } from 'type-graphql'
 import { Token } from './Token'
 
 @ObjectType({ simpleResolvers: true })
+export class Volume24h {
+  @Field()
+  token0Volume: string
+
+  @Field()
+  token1Volume: string
+
+  @Field()
+  volumeUST: string
+}
+
+
+@ObjectType({ simpleResolvers: true })
 export class PairData {
   @Field()
   pairAddress: string
@@ -20,6 +33,9 @@ export class PairData {
 
   @Field()
   commissionAPR: string
+
+  @Field((type) => Volume24h)
+  volume24h: Volume24h
 
   @Field((type) => [PairHistoricalData])
   historicalData: PairHistoricalData[]
