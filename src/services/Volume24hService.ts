@@ -13,7 +13,7 @@ export class Volume24hService {
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
-  async getTokenInfo(
+  async getVolume24h(
     pair: string,
     repo = this.repo,
     pairRepo = this.pairRepo
@@ -21,37 +21,19 @@ export class Volume24hService {
     const recent = await repo.find({ where: { pair } })
     const pairInfo = await pairRepo.findOne({ where: { pair } })
     if (!pairInfo) return
-    if (!recent[0])
+    if (!recent[0]){
       return {
-        pairAddress: pair,
-        token0: await this.tokenService.getTokenInfo(pairInfo.token0),
-        token1: await this.tokenService.getTokenInfo(pairInfo.token1),
         token0Volume: '0',
         token1Volume: '0',
         volumeUST: '0',
       }
-
-    const token0 = await this.tokenService.getTokenInfo(recent[0].token0)
-    const token1 = await this.tokenService.getTokenInfo(recent[0].token1)
+    }
+    
     return {
-      pairAddress: pair,
-      token0,
-      token1,
       token0Volume: sumVolume(Key.TOKEN_0_VOLUME, recent).toString(),
       token1Volume: sumVolume(Key.TOKEN_1_VOLUME, recent).toString(),
       volumeUST: sumVolume(Key.VOLUME_UST, recent).toString(),
     }
-  }
-
-  async getTokensInfo(repo = this.repo, pairRepo = this.pairRepo): Promise<Volume24h[]> {
-    const pairList = await pairRepo.find()
-    const result: Volume24h[] = []
-    for (const pair of pairList) {
-      const tokenInfo = await this.getTokenInfo(pair.pair)
-      if (tokenInfo) result.push(tokenInfo)
-    }
-
-    return result
   }
 }
 

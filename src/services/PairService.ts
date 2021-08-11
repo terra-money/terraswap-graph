@@ -24,7 +24,7 @@ export class PairService {
     }
   }
 
-  async getPairInfos(repo = this.repo): Promise<Pair[]> {
+  async getPairList(repo = this.repo): Promise<Pair[]> {
     const pairInfos = await repo.find()
     const result: Pair[] = []
     for (const info of pairInfos) {
