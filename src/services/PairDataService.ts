@@ -16,12 +16,11 @@ export class PairDataService {
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
-  async getPairData(pairs: string[], hourRepo = this.hourRepo): Promise<void | Partial<PairData>[]> {
-    const repo = hourRepo
+  async getPairData(pairs: string[], dayRepo = this.dayRepo): Promise<void | Partial<PairData>[]> {
+    const repo = dayRepo
 
-    const now = new Date()
-    const recent = new Date(now.valueOf() - 3.6e6)
-    const sevenDaysBefore = new Date(recent.valueOf() - 6.048e8)
+    
+
     const returnArray = []
     for (const pair of pairs){
       const latest = await repo.findOne({
@@ -31,37 +30,45 @@ export class PairDataService {
   
       if (!latest) return
   
-      const recentData = await repo.findOne({
-        where: { pair, timestamp: LessThanOrEqual(recent) },
-        order: { timestamp: 'DESC' },
-      })
-  
-      const sevenDaysBeforeData = await repo.findOne({
-        where: { pair, timestamp: LessThanOrEqual(sevenDaysBefore) },
-        order: { timestamp: 'DESC' },
-      })
-  
       const token0 = await this.tokenService.getTokenInfo(latest.token0)
       const token1 = await this.tokenService.getTokenInfo(latest.token1)
-      
-      let commissionAPR = num(0)
-      //least need 7 days data
-      if (sevenDaysBeforeData) {
-        const recentValue = getLpTokenValue(recentData)
-        const oldValue = getLpTokenValue(sevenDaysBeforeData)
-        commissionAPR = recentValue.minus(oldValue).multipliedBy(52.142857142857143).div(oldValue)
-      }
+    
   
       returnArray.push({
         pairAddress: pair,
         token0,
         token1,
-        commissionAPR: commissionAPR.toString(),
         latestToken0Price: num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10),
-        latestToken1Price: num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10),
+        latestToken1Price: num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10),
+        latestLiquidityUST: latest.liquidityUst
       })
     }
     return returnArray
+  }
+
+  async getCommissionAPR(pair: string, repo = this.hourRepo): Promise<string> {
+    const now = new Date()
+    const recent = new Date(now.valueOf() - 3.6e6)
+    const sevenDaysBefore = new Date(recent.valueOf() - 6.048e8)
+    const recentData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(recent) },
+      order: { timestamp: 'DESC' },
+    })
+
+    const sevenDaysBeforeData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(sevenDaysBefore) },
+      order: { timestamp: 'DESC' },
+    })
+
+    let commissionAPR = num(0)
+
+    if (sevenDaysBeforeData) {
+      const recentValue = getLpTokenValue(recentData)
+      const oldValue = getLpTokenValue(sevenDaysBeforeData)
+      commissionAPR = recentValue.minus(oldValue).multipliedBy(52.142857142857143).div(oldValue)
+    }
+
+    return commissionAPR.toString()
   }
 
   async getHistoricalData(

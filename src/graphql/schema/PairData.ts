@@ -32,6 +32,9 @@ export class PairData {
   latestToken1Price: string
 
   @Field()
+  latestLiquidityUST: string
+
+  @Field()
   commissionAPR: string
 
   @Field((type) => Volume24h)
