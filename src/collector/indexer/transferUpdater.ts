@@ -206,7 +206,7 @@ export async function updateReserves(
   await updateReserve(Cycle.DAY, manager, updatedReserve, liquidity, pair)
 }
 
-export async function updateTotalLiquidity(
+export async function updateTerraswapData(
   manager: EntityManager
 ): Promise<TerraswapDayDataEntity[] | void> {
   const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
@@ -218,9 +218,9 @@ export async function updateTotalLiquidity(
   if (!lastData[0]) return undefined
 
   //now date
-  const toDayLiquidities = await manager
+  const todayData = await manager
     .createQueryBuilder()
-    .select('liquidity_ust')
+    .select(['liquidity_ust', 'volume_ust', 'txns', 'timestamp'])
     .from(PairDayDataEntity, 'pair')
     .where('pair.timestamp <= :timestamp', { timestamp: lastData[0].timestamp })
     .distinctOn(['pair.pair'])
@@ -228,19 +228,29 @@ export async function updateTotalLiquidity(
     .addOrderBy('pair.timestamp', 'DESC')
     .getRawMany()
 
-  let sum = 0
-
-  for (const liquidity of toDayLiquidities) {
-    sum += Number(liquidity.liquidity_ust)
+  let sum = {
+    liuqidity: 0,
+    volume: 0,
+    txns: 0,
   }
 
-  lastData[0].totalLiquidityUst = sum.toString()
+  for (const data of todayData) {
+    sum.liuqidity += Number(data.liquidity_ust)
+    if (data.timestamp.valueOf() === lastData[0].timestamp.valueOf()){
+      sum.volume += Number(data.volume_ust)
+      sum.txns += data.txns
+    }
+  }
+
+  lastData[0].totalLiquidityUst = sum.liuqidity.toString()
+  lastData[0].volumeUst = sum.volume.toString()
+  lastData[0].txns = sum.txns
 
   if (lastData[1]) {
     //last date
-    const lastDayLiquidities = await manager
+    const lastDayData = await manager
       .createQueryBuilder()
-      .select('liquidity_ust')
+      .select(['liquidity_ust', 'volume_ust', 'txns', 'timestamp'])
       .from(PairDayDataEntity, 'pair')
       .where('pair.timestamp <= :timestamp', { timestamp: lastData[1].timestamp })
       .distinctOn(['pair.pair'])
@@ -248,13 +258,23 @@ export async function updateTotalLiquidity(
       .addOrderBy('pair.timestamp', 'DESC')
       .getRawMany()
 
-    sum = 0
-
-    for (const liquidity of lastDayLiquidities) {
-      sum += Number(liquidity.liquidity_ust)
+    sum = {
+      liuqidity: 0,
+      volume: 0,
+      txns: 0,
     }
 
-    lastData[1].totalLiquidityUst = sum.toString()
+    for (const data of lastDayData) {
+      sum.liuqidity += Number(data.liquidity_ust)
+      if (data.timestamp.valueOf() === lastData[1].timestamp.valueOf()){
+        sum.volume += Number(data.volume_ust)
+        sum.txns += data.txns
+      }
+    }
+
+    lastData[1].totalLiquidityUst = sum.liuqidity.toString()
+    lastData[1].volumeUst = sum.volume.toString()
+    lastData[1].txns = sum.txns
   }
 
   return terraswapRepo.save(lastData)
