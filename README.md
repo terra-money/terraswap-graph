@@ -10,8 +10,8 @@
 
 ## Prerequisites
 
-1. Node.js
-2. PostgreSQL
+1. Node.js >= 14.15.x
+2. PostgreSQL == 13.x
 
 ## Setup 
 
@@ -97,6 +97,8 @@
     
     .envrc (sample)
       ```
+      TZ='UTC'
+      
       export TERRA_LCD='https://lcd.terra.dev'
       export TERRA_CHAIN_ID='columbus-4'
       export TERRA_MANTLE='https://mantle.terra.dev'
@@ -109,4 +111,9 @@
 * ### Collector
     ```zsh
     $ npm run collect
+    ```
+
+* ### GraphQL
+    ```zsh
+    $ npm start
     ```
