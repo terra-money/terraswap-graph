@@ -9,7 +9,7 @@ export class BlockService {
     @InjectRepository(BlockEntity) private readonly repo: Repository<BlockEntity>,
   ) {}
 
-  async getCollectedBlock(repo = this.repo): Promise<number> {
+  async getSyncedBlockHeight(repo = this.repo): Promise<number> {
     return repo.findOne(undefined, { order: { id: 'DESC' } })
       .then((block) => block.height)
   }

@@ -9,7 +9,7 @@ export class BlockResolver {
   constructor(private readonly blockService: BlockService) {}
 
   @Query((returns) => Int, { nullable: true })
-  async collectedBlockHeight(): Promise<number> {
-    return this.blockService.getCollectedBlock()
+  async syncedBlockHeight(): Promise<number> {
+    return this.blockService.getSyncedBlockHeight()
   }
 }
