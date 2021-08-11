@@ -7,7 +7,7 @@ import { getCollectedBlock, updateBlock } from './block'
 import { runIndexers } from './indexer'
 import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
-import { updateTotalLiquidity } from './indexer/transferUpdater'
+import { updateTerraswapData } from './indexer/transferUpdater'
 
 export async function collect(
   pairList: Record<string, boolean>,
@@ -21,7 +21,6 @@ export async function collect(
 
   const lastHeight = collectedBlock.height
 
-  const exManager = getManager()
   if (latestBlock === lastHeight) {
     await delay(500)
     return
@@ -48,8 +47,8 @@ export async function collect(
         }
       }
       await delete24hData(manager, new Date().valueOf())
+      await updateTerraswapData(manager)
     })
     logger.info(`collected: ${endblock} / latest height: ${latestBlock}`)
-    await updateTotalLiquidity(exManager)
   }
 }

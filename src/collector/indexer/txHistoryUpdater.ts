@@ -20,7 +20,6 @@ export async function updateTxns(
 ): Promise<void> {
   await updateOrAddTxns(Cycle.HOUR, timestamp, manager, pair)
   await updateOrAddTxns(Cycle.DAY, timestamp, manager, pair)
-  await updateOrAddTxnsForTerraswap(timestamp, manager)
 }
 
 export async function updateVolume(
@@ -30,7 +29,6 @@ export async function updateVolume(
 ): Promise<void> {
   await updatePairVolume(Cycle.HOUR, manager, transformed, exchangeRate)
   await updatePairVolume(Cycle.DAY, manager, transformed, exchangeRate)
-  await updateTerraswapVolume(manager, transformed, exchangeRate)
 }
 
 export async function updateVolume24h(
@@ -191,7 +189,7 @@ async function updateOrAddTxns(
   }
 }
 
-async function updateOrAddTxnsForTerraswap(
+export async function generateTerraswapRow(
   timestamp: number,
   manager: EntityManager
 ): Promise<TerraswapDayDataEntity | void> {
@@ -205,15 +203,12 @@ async function updateOrAddTxnsForTerraswap(
 
   const isSame = txTime.valueOf() === lastData?.timestamp?.valueOf()
 
-  if (isSame) {
-    lastData.txns += 1
-    return terraswapRepo.save(lastData)
-  } else {
+  if (!isSame) {
     const terraswapData = new TerraswapDayDataEntity({
       timestamp: txTime,
       volumeUst: '0',
       totalLiquidityUst: lastData === undefined ? '0' : lastData.totalLiquidityUst,
-      txns: 1,
+      txns: 0,
     })
     return terraswapRepo.save(terraswapData)
   }
@@ -328,29 +323,4 @@ async function changeVolumeAsUST(
       ? num(token0Price.price).multipliedBy(transformed.assets[0].amount).abs().toString()
       : num(token1Price.price).multipliedBy(transformed.assets[1].amount).abs().toString()
   }
-}
-
-async function updateTerraswapVolume(
-  manager: EntityManager,
-  transformed: TxHistoryTransformed,
-  exchangeRate: ExchangeRate | undefined
-): Promise<TerraswapDayDataEntity | void> {
-  const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
-
-  const lastData = await terraswapRepo.findOne({
-    order: { timestamp: 'DESC' },
-  })
-
-  if (!lastData) return
-
-  const newVolumeUST = await changeVolumeAsUST(
-    manager,
-    lastData.timestamp,
-    transformed,
-    exchangeRate
-  )
-
-  lastData.volumeUst = (Number(lastData.volumeUst) + Number(newVolumeUST)).toString()
-
-  return terraswapRepo.save(lastData)
 }
