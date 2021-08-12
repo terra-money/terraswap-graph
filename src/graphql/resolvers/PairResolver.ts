@@ -13,19 +13,19 @@ export class PairDataResolver {
     private readonly volume24hService: Volume24hService
   ) {}
 
+  @Query((returns) => PairData)
+  async pair(@Arg('pairAddress', (type) => String) pairAddress: string): Promise<Partial<PairData>> {
+    const pairData = await this.pairDataService.getPair(pairAddress)
+    if (!pairData) throw new Error('there are no transactions of this pair')
+    return pairData as PairData
+  }
+
   @Query((returns) => [PairData])
   async pairs(
     @Arg('pairAddresses', (type) => [String], { nullable: true }) pairAddresses?: string[]
   ): Promise<Partial<PairData>[]> {
     const pairData = await this.pairDataService.getPairs(pairAddresses)
     return pairData as PairData[]
-  }
-
-  @Query((returns) => PairData)
-  async pair(@Arg('pairAddress', (type) => String) pairAddress: string): Promise<Partial<PairData>> {
-    const pairData = await this.pairDataService.getPair(pairAddress)
-    if (!pairData) throw new Error('there are no transactions of this pair')
-    return pairData as PairData
   }
 
   @FieldResolver((type) => String)
