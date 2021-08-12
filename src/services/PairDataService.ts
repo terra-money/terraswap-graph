@@ -19,8 +19,6 @@ export class PairDataService {
   async getPairData(pairs: string[], dayRepo = this.dayRepo): Promise<void | Partial<PairData>[]> {
     const repo = dayRepo
 
-    
-
     const returnArray = []
     for (const pair of pairs){
       const latest = await repo.findOne({
@@ -33,7 +31,6 @@ export class PairDataService {
       const token0 = await this.tokenService.getTokenInfo(latest.token0)
       const token1 = await this.tokenService.getTokenInfo(latest.token1)
     
-  
       returnArray.push({
         pairAddress: pair,
         token0,

@@ -13,7 +13,6 @@ export class Volume24h {
   volumeUST: string
 }
 
-
 @ObjectType({ simpleResolvers: true })
 export class PairData {
   @Field()
