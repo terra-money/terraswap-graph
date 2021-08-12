@@ -10,26 +10,27 @@ export class TokenService {
     @InjectRepository(TokenInfoEntity) private readonly repo: Repository<TokenInfoEntity>
   ) {}
 
-  async getTokenInfo(token: string, repo = this.repo): Promise<Token> {
+  async getToken(token: string, repo = this.repo): Promise<Token> {
     const tokenInfo = await repo.findOne({ where: { tokenAddress: token } })
     return {
-      tokenAddress: tokenInfo.tokenAddress,
-      symbol: tokenInfo.symbol,
-      includedPairs: tokenInfo.pairs,
+      tokenAddress: token,
+      symbol: tokenInfo?.symbol,
+      includedPairs: tokenInfo?.pairs,
     }
   }
 
-  async getTokenInfos(repo = this.repo): Promise<Token[]> {
-    const tokenInfos = await repo.find()
-    const result: Token[] = []
-    for (const info of tokenInfos) {
-      result.push({
-        tokenAddress: info.tokenAddress,
-        symbol: info.symbol,
-        includedPairs: info.pairs,
-      })
+  async getTokens(tokens?: string[], repo = this.repo): Promise<Token[]> {
+    if (!tokens){
+      tokens = []
+      const tokenInfos = await repo.find()
+      for (const tokenInfo of tokenInfos) {
+        tokens.push(tokenInfo.tokenAddress)
+      }
     }
-
+    const result = []
+    for (const token of tokens){
+      result.push(await this.getToken(token))
+    }
     return result
   }
 }

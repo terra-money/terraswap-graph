@@ -1,47 +1,211 @@
-import { Container, Service, Inject } from 'typedi'
-import { Repository } from 'typeorm'
+import { Container, Inject, Service } from 'typedi'
+import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { PairInfoEntity } from 'orm'
+import { PairDataEntity, PairDayDataEntity, PairHourDataEntity, PairInfoEntity } from 'orm'
+import { dateToNumber, numberToDate } from 'lib/utils'
+import { Cycle } from 'types'
 import { TokenService } from './TokenService'
-import { Pair } from 'graphql/schema'
+import { PairData, PairHistoricalData } from 'graphql/schema'
+import { num } from 'lib/num'
 
 @Service()
-export class PairService {
+export class PairDataService {
   constructor(
-    @InjectRepository(PairInfoEntity) private readonly repo: Repository<PairInfoEntity>,
+    @InjectRepository(PairInfoEntity) private readonly pairRepo: Repository<PairInfoEntity>,
+    @InjectRepository(PairDayDataEntity) private readonly dayRepo: Repository<PairDayDataEntity>,
+    @InjectRepository(PairHourDataEntity) private readonly hourRepo: Repository<PairHourDataEntity>,
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
-  async getPairInfo(pair: string, repo = this.repo): Promise<Pair> {
-    const pairInfo = await repo.findOne({ where: { pair } })
-    const token0 = await this.tokenService.getTokenInfo(pairInfo.token0)
-    const token1 = await this.tokenService.getTokenInfo(pairInfo.token1)
+  async getPairs(
+    pairs?: string[],
+    pairRepo = this.pairRepo,
+    dayRepo = this.dayRepo
+  ): Promise<void | Partial<PairData>[]> {
+    const pairInfos = await pairRepo.find()
+
+    // pair: lpToken
+    const pairList:Record<string, string> = {}
+
+    for (const pairInfo of pairInfos) {
+      pairList[pairInfo.pair] = pairInfo.lpToken
+    }
+
+    if (!pairs){
+      pairs = []
+      for (const pairInfo of pairInfos) {
+        pairs.push(pairInfo.pair)
+      }
+    }
+
+    const returnArray = []
+    for (const pair of pairs){
+      let isPairDataExist = true
+
+      const latest = await dayRepo.findOne({
+        where: { pair },
+        order: { timestamp: 'DESC' },
+      })
+  
+      if (!latest) {
+        isPairDataExist = false
+      }
+  
+      const token0 = isPairDataExist ? await this.tokenService.getToken(latest.token0) : null
+      const token1 = isPairDataExist ? await this.tokenService.getToken(latest.token1) : null
+    
+      returnArray.push({
+        pairAddress: pair,
+        token0,
+        token1,
+        latestToken0Price: isPairDataExist ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
+        latestToken1Price: isPairDataExist ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
+        latestLiquidityUST: isPairDataExist ? latest.liquidityUst : null,
+        lpTokenAddress: pairList[pair]
+      })
+    }
+    return returnArray
+  }
+
+  async getPair(
+    pair: string,
+    pairRepo = this.pairRepo,
+    dayRepo = this.dayRepo
+  ): Promise<void | Partial<PairData>> {
+    const pairInfo = await pairRepo.findOne({
+      where: {pair}
+    })
+
+    if (!pairInfo) return
+
+    // pair: lpToken
+    const lpToken = pairInfo.lpToken
+
+    let isPairDataExist = true
+
+    const latest = await dayRepo.findOne({
+      where: { pair },
+      order: { timestamp: 'DESC' },
+    })
+
+    if (!latest) {
+      isPairDataExist = false
+    }
+
+    const token0 = await this.tokenService.getToken(latest.token0)
+    const token1 = await this.tokenService.getToken(latest.token1)
+  
     return {
-      pairAddress: pairInfo.pair,
-      token0: token0,
-      token1: token1,
-      lpTokenAddress: pairInfo.lpToken,
+      pairAddress: pair,
+      token0,
+      token1,
+      latestToken0Price: isPairDataExist ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
+      latestToken1Price: isPairDataExist ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
+      latestLiquidityUST: isPairDataExist ? latest.liquidityUst : null,
+      lpTokenAddress: lpToken
     }
   }
 
-  async getPairList(repo = this.repo): Promise<Pair[]> {
-    const pairInfos = await repo.find()
-    const result: Pair[] = []
-    for (const info of pairInfos) {
-      const token0 = await this.tokenService.getTokenInfo(info.token0)
-      const token1 = await this.tokenService.getTokenInfo(info.token1)
-      result.push({
-        pairAddress: info.pair,
-        token0: token0,
-        token1: token1,
-        lpTokenAddress: info.lpToken,
+  async getCommissionAPR(pair: string, repo = this.hourRepo): Promise<string> {
+    const now = new Date()
+    const recent = new Date(now.valueOf() - 3.6e6)
+    const sevenDaysBefore = new Date(recent.valueOf() - 6.048e8)
+    const recentData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(recent) },
+      order: { timestamp: 'DESC' },
+    })
+
+    const sevenDaysBeforeData = await repo.findOne({
+      where: { pair, timestamp: LessThanOrEqual(sevenDaysBefore) },
+      order: { timestamp: 'DESC' },
+    })
+
+    let commissionAPR = num(0)
+
+    if (sevenDaysBeforeData) {
+      const recentValue = getLpTokenValue(recentData)
+      const oldValue = getLpTokenValue(sevenDaysBeforeData)
+      commissionAPR = recentValue.minus(oldValue).multipliedBy(52.142857142857143).div(oldValue)
+    }
+
+    return commissionAPR.toString()
+  }
+
+  async getHistoricalData(
+    pair: string,
+    from: number,
+    to: number,
+    cycle: Cycle,
+    dayRepo = this.dayRepo,
+    hourRepo = this.hourRepo
+  ): Promise<void | PairHistoricalData[]> {
+    const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
+    const fromDate = numberToDate(from + cycle / 1000, cycle)
+    const toDate = numberToDate(to, cycle)
+    let newFrom = await repo.findOne({
+      select: ['timestamp'],
+      order: { timestamp: 'DESC' },
+      where: { timestamp: LessThanOrEqual(fromDate), pair },
+    })
+
+    if (!newFrom) {
+      newFrom = await repo.findOne({
+        order: { timestamp: 'ASC' },
+        where: { pair },
       })
     }
 
-    return result
+    if (!newFrom) return //no data
+
+    const pairData = await repo
+      .createQueryBuilder()
+      .where('pair = :pair', { pair })
+      .andWhere('timestamp <= :toDate', { toDate })
+      .andWhere('timestamp >= :newFrom', { newFrom: newFrom.timestamp })
+      .orderBy('timestamp', 'DESC')
+      .getMany()
+
+    if (!pairData[0]) return
+
+    let indexTimestamp = dateToNumber(toDate)
+
+    const pairHistory: PairHistoricalData[] = []
+
+    for (const tick of pairData) {
+      while (
+        dateToNumber(tick.timestamp) <= indexTimestamp &&
+        indexTimestamp >= dateToNumber(fromDate)
+      ) {
+        const isSameTick = dateToNumber(tick.timestamp) == indexTimestamp
+
+        pairHistory.push({
+          timestamp: indexTimestamp,
+          token0Price: num(tick.token1Reserve).div(tick.token0Reserve).toFixed(10),
+          token1Price: num(tick.token0Reserve).div(tick.token1Reserve).toFixed(10),
+          token0Volume: isSameTick ? tick.token0Volume : '0',
+          token1Volume: isSameTick ? tick.token1Volume : '0',
+          token0Reserve: tick.token0Reserve,
+          token1Reserve: tick.token1Reserve,
+          totalLpTokenShare: tick.totalLpTokenShare,
+          volumeUST: isSameTick ? tick.volumeUst : '0',
+          liquidityUST: tick.liquidityUst,
+          txCount: isSameTick ? tick.txns : 0,
+        })
+        indexTimestamp -= cycle / 1000
+      }
+    }
+
+    return pairHistory
   }
 }
 
-export function pairService(): PairService {
-  return Container.get(PairService)
+export function pairDataService(): PairDataService {
+  return Container.get(PairDataService)
+}
+
+function getLpTokenValue(data: PairDataEntity) {
+  const token0Amount = num(data.token0Reserve)
+  const token1Amount = num(data.token1Reserve)
+  const totalLpTokenShare = num(data.totalLpTokenShare)
+  return token0Amount.multipliedBy(token1Amount).squareRoot().div(totalLpTokenShare)
 }

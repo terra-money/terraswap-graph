@@ -5,9 +5,9 @@ export class Token {
   @Field()
   tokenAddress: string
 
-  @Field()
+  @Field({ nullable: true })
   symbol: string
 
-  @Field((type) => [String])
+  @Field((type) => [String], { nullable: true })
   includedPairs: string[]
 }

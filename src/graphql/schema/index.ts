@@ -1,5 +1,4 @@
 export * from './Block'
-export * from './PairData'
+export * from './Pair'
 export * from './TerraswapDayData'
 export * from './Token'
-export * from './Pair'

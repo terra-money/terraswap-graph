@@ -13,7 +13,7 @@ export class TerraswapService {
     @InjectRepository(Recent24hEntity) private readonly recent24hRepo: Repository<Recent24hEntity>
   ) {}
 
-  async getTerraswapData(
+  async getTerraswap(
     recent24hRepo = this.recent24hRepo,
     terraswapRepo = this.terraswapRepo
   ): Promise<Partial<TerraswapData>> {
