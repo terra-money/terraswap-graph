@@ -9,12 +9,16 @@ export class TokenResolver {
   constructor(private readonly tokenService: TokenService) {}
 
   @Query((returns) => Token)
-  async tokenInfo(@Arg('tokenAddress') tokenAddress: string): Promise<Token> {
-    return this.tokenService.getTokenInfo(tokenAddress)
+  async token(@Arg('tokenAddress', (type) => String) tokenAddress: string): Promise<Token> {
+    const token = await this.tokenService.getToken(tokenAddress)
+    if (!token) throw new Error('token is not exist')
+    return token
   }
 
   @Query((returns) => [Token])
-  async tokenInfos(): Promise<Token[]> {
-    return this.tokenService.getTokenInfos()
+  async tokens(
+    @Arg('tokenAddresses', (type) => [String], { nullable: true }) tokenAddresses?: string[]
+  ): Promise<Token[]> {
+    return await this.tokenService.getTokens(tokenAddresses)
   }
 }

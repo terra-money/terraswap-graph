@@ -1,5 +1,5 @@
 export * from './BlockService'
-export * from './PairDataService'
+export * from './PairService'
 export * from './Volume24hService'
 export * from './TerraswapService'
 export * from './PairService'

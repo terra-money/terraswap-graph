@@ -11,8 +11,8 @@ export class TerraswapDayDataResolver {
   constructor(private readonly terraswapServie: TerraswapService) {}
 
   @Query((returns) => TerraswapData)
-  async terraswapData(): Promise<Partial<TerraswapData>> {
-    const terraswapData = await this.terraswapServie.getTerraswapData()
+  async terraswap(): Promise<Partial<TerraswapData>> {
+    const terraswapData = await this.terraswapServie.getTerraswap()
     return terraswapData as TerraswapData
   }
 
