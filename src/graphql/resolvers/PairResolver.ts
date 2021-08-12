@@ -16,7 +16,7 @@ export class PairDataResolver {
   @Query((returns) => PairData)
   async pair(@Arg('pairAddress', (type) => String) pairAddress: string): Promise<Partial<PairData>> {
     const pairData = await this.pairDataService.getPair(pairAddress)
-    if (!pairData) throw new Error('there are no transactions of this pair')
+
     return pairData as PairData
   }
 
@@ -44,7 +44,6 @@ export class PairDataResolver {
     rangeLimit(from, to, cycle, 500)
 
     const data = await this.pairDataService.getHistoricalData(pairData.pairAddress, from, to, cycle)
-    if (!data) throw new Error('there are no transactions on pair: ' + pairData.pairAddress)
     
     return data
   }

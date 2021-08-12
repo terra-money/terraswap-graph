@@ -138,7 +138,7 @@ export class PairDataService {
     cycle: Cycle,
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
-  ): Promise<void | PairHistoricalData[]> {
+  ): Promise<PairHistoricalData[]> {
     const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
     const fromDate = numberToDate(from + cycle / 1000, cycle)
     const toDate = numberToDate(to, cycle)
@@ -165,7 +165,7 @@ export class PairDataService {
       .orderBy('timestamp', 'DESC')
       .getMany()
 
-    if (!pairData[0]) return
+    if (!pairData[0]) return []
 
     let indexTimestamp = dateToNumber(toDate)
 
