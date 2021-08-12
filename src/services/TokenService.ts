@@ -1,3 +1,4 @@
+import * as bluebird from 'bluebird'
 import { Container, Service } from 'typedi'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -27,11 +28,10 @@ export class TokenService {
         tokens.push(tokenInfo.tokenAddress)
       }
     }
-    const result = []
-    for (const token of tokens){
-      result.push(await this.getToken(token))
-    }
-    return result
+
+    return bluebird
+      .map(tokens, async (token) => this.getToken(token))
+      .filter(Boolean)
   }
 }
 

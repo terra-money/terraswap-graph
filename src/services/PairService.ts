@@ -1,3 +1,4 @@
+import * as bluebird from 'bluebird'
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -24,13 +25,6 @@ export class PairDataService {
   ): Promise<void | Partial<PairData>[]> {
     const pairInfos = await pairRepo.find()
 
-    // pair: lpToken
-    const pairList:Record<string, string> = {}
-
-    for (const pairInfo of pairInfos) {
-      pairList[pairInfo.pair] = pairInfo.lpToken
-    }
-
     if (!pairs){
       pairs = []
       for (const pairInfo of pairInfos) {
@@ -38,70 +32,40 @@ export class PairDataService {
       }
     }
 
-    const returnArray = []
-    for (const pair of pairs){
-      let isPairDataExist = true
-
-      const latest = await dayRepo.findOne({
-        where: { pair },
-        order: { timestamp: 'DESC' },
-      })
-  
-      if (!latest) {
-        isPairDataExist = false
-      }
-  
-      const token0 = isPairDataExist ? await this.tokenService.getToken(latest.token0) : null
-      const token1 = isPairDataExist ? await this.tokenService.getToken(latest.token1) : null
-    
-      returnArray.push({
-        pairAddress: pair,
-        token0,
-        token1,
-        latestToken0Price: isPairDataExist ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
-        latestToken1Price: isPairDataExist ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
-        latestLiquidityUST: isPairDataExist ? latest.liquidityUst : null,
-        lpTokenAddress: pairList[pair]
-      })
-    }
-    return returnArray
+    return bluebird
+      .map(pairs, async (pair) => this.getPair(pair, pairRepo, dayRepo))
+      .filter(Boolean)
   }
 
   async getPair(
     pair: string,
     pairRepo = this.pairRepo,
     dayRepo = this.dayRepo
-  ): Promise<void | Partial<PairData>> {
+  ): Promise<Partial<PairData>> {
     const pairInfo = await pairRepo.findOne({
-      where: {pair}
+      where: { pair }
     })
 
-    if (!pairInfo) return
+    if (!pairInfo) return undefined
 
     // pair: lpToken
     const lpToken = pairInfo.lpToken
-
-    let isPairDataExist = true
 
     const latest = await dayRepo.findOne({
       where: { pair },
       order: { timestamp: 'DESC' },
     })
 
-    if (!latest) {
-      isPairDataExist = false
-    }
-
-    const token0 = await this.tokenService.getToken(latest.token0)
-    const token1 = await this.tokenService.getToken(latest.token1)
+    const token0 = await this.tokenService.getToken(pairInfo.token0)
+    const token1 = await this.tokenService.getToken(pairInfo.token1)
   
     return {
       pairAddress: pair,
       token0,
       token1,
-      latestToken0Price: isPairDataExist ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
-      latestToken1Price: isPairDataExist ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
-      latestLiquidityUST: isPairDataExist ? latest.liquidityUst : null,
+      latestToken0Price: latest ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
+      latestToken1Price: latest ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
+      latestLiquidityUST: latest ? latest.liquidityUst : null,
       lpTokenAddress: lpToken
     }
   }
