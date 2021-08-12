@@ -6,10 +6,10 @@ import { PairService } from 'services'
 @Service()
 @Resolver((of) => Pair)
 export class PairResolver {
-  constructor(private readonly tokenService: PairService) {}
+  constructor(private readonly pairService: PairService) {}
 
   @Query((returns) => [Pair])
   async pairList(): Promise<Pair[]> {
-    return this.tokenService.getPairList()
+    return this.pairService.getPairList()
   }
 }

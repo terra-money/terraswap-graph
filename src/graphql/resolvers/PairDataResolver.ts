@@ -20,6 +20,11 @@ export class PairDataResolver {
     return pairData as PairData[]
   }
 
+  @FieldResolver((type) => String)
+  async commissionAPR(@Root() pairData: PairData): Promise<string> {
+    return this.pairDataService.getCommissionAPR(pairData.pairAddress)
+  }
+
   @FieldResolver((type) => [PairHistoricalData])
   async historicalData(
     @Root() pairData: PairData,

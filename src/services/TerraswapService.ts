@@ -1,19 +1,44 @@
 import { Container, Service } from 'typedi'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { TerraswapDayDataEntity } from 'orm'
-import { TerraswapDay } from 'graphql/schema/TerraswapDayData'
+import { Recent24hEntity, TerraswapDayDataEntity } from 'orm'
+import { TerraswapData, TerraswapHistoricalData } from 'graphql/schema/TerraswapDayData'
 import { dateToNumber, numberToDate } from 'lib/utils'
 import { Cycle } from 'types'
 
 @Service()
 export class TerraswapService {
   constructor(
-    @InjectRepository(TerraswapDayDataEntity)
-    private readonly repo: Repository<TerraswapDayDataEntity>
+    @InjectRepository(TerraswapDayDataEntity) private readonly terraswapRepo: Repository<TerraswapDayDataEntity>,
+    @InjectRepository(Recent24hEntity) private readonly recent24hRepo: Repository<Recent24hEntity>
   ) {}
 
-  async getTerraswapData(from: number, to: number, repo = this.repo): Promise<TerraswapDay[]> {
+  async getTerraswapData(
+    recent24hRepo = this.recent24hRepo,
+    terraswapRepo = this.terraswapRepo
+  ): Promise<Partial<TerraswapData>> {
+    const latestData = await terraswapRepo.findOne({
+      select: ['totalLiquidityUst'],
+      order: { timestamp: 'DESC' },
+    })
+
+    const recent24hData = await recent24hRepo.find({
+      select: ['volumeUst']
+    })
+
+    let voluem24h = 0
+
+    for (const volume of recent24hData) {
+      voluem24h += Number(volume.volumeUst)
+    }
+
+    return {
+      volumeUST24h: voluem24h.toString(),
+      liquidityUST: latestData.totalLiquidityUst
+    }
+  }
+
+  async getTerraswapHistoricalData(from: number, to: number, repo = this.terraswapRepo): Promise<TerraswapHistoricalData[]> {
     const fromDate = numberToDate(from, Cycle.DAY)
     const toDate = numberToDate(to, Cycle.DAY)
 

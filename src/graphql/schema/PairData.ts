@@ -13,7 +13,6 @@ export class Volume24h {
   volumeUST: string
 }
 
-
 @ObjectType({ simpleResolvers: true })
 export class PairData {
   @Field()
@@ -30,6 +29,9 @@ export class PairData {
 
   @Field()
   latestToken1Price: string
+
+  @Field()
+  latestLiquidityUST: string
 
   @Field()
   commissionAPR: string
