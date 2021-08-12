@@ -22,7 +22,7 @@ export class PairDataService {
     pairs?: string[],
     pairRepo = this.pairRepo,
     dayRepo = this.dayRepo
-  ): Promise<void | Partial<PairData>[]> {
+  ): Promise<Partial<PairData>[]> {
     const pairInfos = await pairRepo.find()
 
     if (!pairs){

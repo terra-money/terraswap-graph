@@ -13,6 +13,9 @@ export class TokenService {
 
   async getToken(token: string, repo = this.repo): Promise<Token> {
     const tokenInfo = await repo.findOne({ where: { tokenAddress: token } })
+
+    if (!tokenInfo) return undefined
+
     return {
       tokenAddress: token,
       symbol: tokenInfo?.symbol,

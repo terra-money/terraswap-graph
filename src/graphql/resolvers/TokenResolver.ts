@@ -10,7 +10,9 @@ export class TokenResolver {
 
   @Query((returns) => Token)
   async token(@Arg('tokenAddress', (type) => String) tokenAddress: string): Promise<Token> {
-    return this.tokenService.getToken(tokenAddress)
+    const token = await this.tokenService.getToken(tokenAddress)
+    if (!token) throw new Error('token is not exist')
+    return token
   }
 
   @Query((returns) => [Token])

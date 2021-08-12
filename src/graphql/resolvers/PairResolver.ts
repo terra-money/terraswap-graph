@@ -15,9 +15,9 @@ export class PairDataResolver {
 
   @Query((returns) => PairData)
   async pair(@Arg('pairAddress', (type) => String) pairAddress: string): Promise<Partial<PairData>> {
-    const pairData = await this.pairDataService.getPair(pairAddress)
-
-    return pairData as PairData
+    const pair = await this.pairDataService.getPair(pairAddress)
+    if (!pair) throw new Error('pair is not exist')
+    return pair as PairData
   }
 
   @Query((returns) => [PairData])
