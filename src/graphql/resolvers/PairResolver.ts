@@ -50,7 +50,7 @@ export class PairDataResolver {
   @FieldResolver((type) => [Transaction])
   async transactions(
     @Root() pairData: PairData,
-    @Arg('lmiit') limit: number
+    @Arg('limit') limit: number
   ): Promise<Transaction[]> {
     if (limit > 100) {
       throw new Error('limit must lesser than or equal to 100')
