@@ -2,11 +2,11 @@ import * as bluebird from 'bluebird'
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { PairDataEntity, PairDayDataEntity, PairHourDataEntity, PairInfoEntity } from 'orm'
+import { PairDataEntity, PairDayDataEntity, PairHourDataEntity, PairInfoEntity, TxHistoryEntity } from 'orm'
 import { dateToNumber, numberToDate } from 'lib/utils'
 import { Cycle } from 'types'
 import { TokenService } from './TokenService'
-import { PairData, PairHistoricalData } from 'graphql/schema'
+import { PairData, PairHistoricalData, Transaction } from 'graphql/schema'
 import { num } from 'lib/num'
 
 @Service()
@@ -15,6 +15,7 @@ export class PairDataService {
     @InjectRepository(PairInfoEntity) private readonly pairRepo: Repository<PairInfoEntity>,
     @InjectRepository(PairDayDataEntity) private readonly dayRepo: Repository<PairDayDataEntity>,
     @InjectRepository(PairHourDataEntity) private readonly hourRepo: Repository<PairHourDataEntity>,
+    @InjectRepository(TxHistoryEntity) private readonly txRepo: Repository<TxHistoryEntity>,
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
@@ -160,6 +161,24 @@ export class PairDataService {
     }
 
     return pairHistory
+  }
+
+  async getRecentTransactions(pair: string, limit: number): Promise<Transaction[]> {
+    const recentTxns = this.txRepo.find({
+      where: { pair },
+      take: limit
+    })
+
+    return bluebird
+      .map(recentTxns, async (tx) => {
+        return {
+          timestamp: dateToNumber(tx.timestamp),
+          txHash: tx.tx_hash,
+          action: tx.action,
+          token0Amount: tx.token0Amount,
+          token1Amount: tx.token1Amount
+        }
+      })
   }
 }
 

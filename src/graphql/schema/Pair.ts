@@ -81,3 +81,21 @@ export class PairHistoricalData {
   @Field()
   txCount: number
 }
+
+@ObjectType({ simpleResolvers: true })
+export class Transaction {
+  @Field()
+  timestamp: number
+
+  @Field()
+  txHash: string
+
+  @Field()
+  action: string
+
+  @Field()
+  token0Amount: string
+
+  @Field()
+  token1Amount: string
+}
