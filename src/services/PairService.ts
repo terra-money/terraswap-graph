@@ -163,7 +163,7 @@ export class PairDataService {
     return pairHistory
   }
 
-  async getRecentTransactions(pair: string, limit: number): Promise<Transaction[]> {
+  async getTransactions(pair: string, limit: number): Promise<Transaction[]> {
     const recentTxns = this.txRepo.find({
       where: { pair },
       order: { timestamp: 'DESC' },

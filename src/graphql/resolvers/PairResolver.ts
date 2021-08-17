@@ -48,14 +48,14 @@ export class PairDataResolver {
   }
 
   @FieldResolver((type) => [Transaction])
-  async recentTransactions(
+  async transactions(
     @Root() pairData: PairData,
     @Arg('lmiit') limit: number
   ): Promise<Transaction[]> {
     if (limit > 100) {
       throw new Error('limit must lesser than or equal to 100')
     }
-    return this.pairDataService.getRecentTransactions(pairData.pairAddress, limit)
+    return this.pairDataService.getTransactions(pairData.pairAddress, limit)
   }
 
   @FieldResolver((returns) => Volume24h)
