@@ -42,6 +42,9 @@ export class PairData {
   @Field((type) => Volume24h, { nullable: true })
   volume24h: Volume24h
 
+  @Field((type) => [Transaction], { nullable: true })
+  recentTransactions: Transaction[]
+
   @Field((type) => [PairHistoricalData], { nullable: true })
   historicalData: PairHistoricalData[]
 }

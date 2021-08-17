@@ -166,6 +166,7 @@ export class PairDataService {
   async getRecentTransactions(pair: string, limit: number): Promise<Transaction[]> {
     const recentTxns = this.txRepo.find({
       where: { pair },
+      order: { timestamp: 'DESC' },
       take: limit
     })
 

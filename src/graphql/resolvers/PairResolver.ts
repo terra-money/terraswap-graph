@@ -48,7 +48,7 @@ export class PairDataResolver {
   }
 
   @FieldResolver((type) => [Transaction])
-  async recentTransaction(
+  async recentTransactions(
     @Root() pairData: PairData,
     @Arg('lmiit') limit: number
   ): Promise<Transaction[]> {
