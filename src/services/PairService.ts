@@ -164,22 +164,19 @@ export class PairDataService {
   }
 
   async getTransactions(pair: string, limit: number): Promise<Transaction[]> {
-    const recentTxns = this.txRepo.find({
-      where: { pair },
-      order: { timestamp: 'DESC' },
-      take: limit
-    })
-
-    return bluebird
-      .map(recentTxns, async (tx) => {
-        return {
-          timestamp: dateToNumber(tx.timestamp),
-          txHash: tx.tx_hash,
-          action: tx.action,
-          token0Amount: tx.token0Amount,
-          token1Amount: tx.token1Amount
-        }
+    return this.txRepo
+      .find({
+        where: { pair },
+        order: { timestamp: 'DESC' },
+        take: limit
       })
+      .then((recentTxns) => recentTxns.map((tx) => ({
+        timestamp: dateToNumber(tx.timestamp),
+        txHash: tx.tx_hash,
+        action: tx.action,
+        token0Amount: tx.token0Amount,
+        token1Amount: tx.token1Amount
+      })))
   }
 }
 
