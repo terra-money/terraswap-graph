@@ -1,4 +1,3 @@
-import * as bluebird from 'bluebird'
 import memoize from 'memoizee-decorator'
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
