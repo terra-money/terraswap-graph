@@ -2,7 +2,7 @@ import { Arg, FieldResolver, Query, Resolver, Root } from 'type-graphql'
 import { Service } from 'typedi'
 import { TerraswapData, TerraswapHistoricalData } from 'graphql/schema'
 import { TerraswapService } from 'services'
-import { rangeLimit } from 'lib/utils'
+import { floorDate, rangeLimit } from 'lib/utils'
 import { Cycle } from 'types'
 
 @Service()
@@ -22,6 +22,8 @@ export class TerraswapDayDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<TerraswapHistoricalData[]> {
+    from = floorDate(from, Cycle.DAY)
+    to = floorDate(to, Cycle.DAY)
     rangeLimit(from, to, Cycle.DAY, 500)
 
     return this.terraswapServie.getTerraswapHistoricalData(from, to)

@@ -53,6 +53,10 @@ export function dateToNumber(timestamp: Date): number {
   return parseInt(stringTime)
 }
 
+export function floorDate(timestamp: number, cycle: number): number {
+  return timestamp - timestamp % (cycle / 1000)
+}
+
 export function compareLiquidity(liquidity0: string, liquidity1: string): boolean {
   if (liquidity0 === 'native') return true
   if (liquidity1 === 'native') return false

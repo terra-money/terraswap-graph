@@ -1,4 +1,5 @@
 import { Container, Service } from 'typedi'
+import memoize from 'memoizee-decorator'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { Recent24hEntity, TerraswapDayDataEntity } from 'orm'
@@ -38,6 +39,7 @@ export class TerraswapService {
     }
   }
 
+  @memoize({ promise: true, maxAge: 60000, primitive: true, length: 2 })
   async getTerraswapHistoricalData(from: number, to: number, repo = this.terraswapRepo): Promise<TerraswapHistoricalData[]> {
     const fromDate = numberToDate(from, Cycle.DAY)
     const toDate = numberToDate(to, Cycle.DAY)

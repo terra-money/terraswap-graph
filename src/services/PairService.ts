@@ -1,4 +1,5 @@
 import * as bluebird from 'bluebird'
+import memoize from 'memoizee-decorator'
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -71,6 +72,7 @@ export class PairDataService {
     }
   }
 
+  @memoize({ promise: true, maxAge: 600000, primitive: true, length: 1 }) //10min
   async getCommissionAPR(pair: string, repo = this.hourRepo): Promise<string> {
     const now = new Date()
     const recent = new Date(now.valueOf() - 3.6e6)
@@ -96,6 +98,7 @@ export class PairDataService {
     return commissionAPR.toString()
   }
 
+  @memoize({ promise: true, maxAge: 60000, primitive: true, length: 4 })
   async getHistoricalData(
     pair: string,
     from: number,
