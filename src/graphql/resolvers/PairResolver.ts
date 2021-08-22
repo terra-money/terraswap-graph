@@ -3,7 +3,7 @@ import { Service } from 'typedi'
 import { PairData, PairHistoricalData, Volume24h, Transaction } from 'graphql/schema'
 import { PairDataService, Volume24hService } from 'services'
 import { Cycle, Interval } from 'types'
-import { rangeLimit } from 'lib/utils'
+import { floorDate, rangeLimit } from 'lib/utils'
 
 @Service()
 @Resolver((of) => PairData)
@@ -40,6 +40,9 @@ export class PairDataResolver {
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairHistoricalData[]> {
     const cycle = interval == Interval.DAY ? Cycle.DAY : Cycle.HOUR
+    from = floorDate(from, cycle)
+    to = floorDate(to, cycle)
+    
     rangeLimit(from, to, cycle, 500)
 
     const data = await this.pairDataService.getHistoricalData(pairData.pairAddress, from, to, cycle)

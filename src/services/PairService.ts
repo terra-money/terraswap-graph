@@ -1,12 +1,12 @@
-import * as bluebird from 'bluebird'
+import memoize from 'memoizee-decorator'
 import { Container, Inject, Service } from 'typedi'
 import { LessThanOrEqual, Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { PairDataEntity, PairDayDataEntity, PairHourDataEntity, PairInfoEntity, TxHistoryEntity } from 'orm'
+import { PairDataEntity, PairDayDataEntity, PairHourDataEntity, PairInfoEntity, TokenInfoEntity, TxHistoryEntity } from 'orm'
 import { dateToNumber, numberToDate } from 'lib/utils'
 import { Cycle } from 'types'
 import { TokenService } from './TokenService'
-import { PairData, PairHistoricalData, Transaction } from 'graphql/schema'
+import { PairData, PairHistoricalData, Transaction, Token } from 'graphql/schema'
 import { num } from 'lib/num'
 
 @Service()
@@ -15,28 +15,73 @@ export class PairDataService {
     @InjectRepository(PairInfoEntity) private readonly pairRepo: Repository<PairInfoEntity>,
     @InjectRepository(PairDayDataEntity) private readonly dayRepo: Repository<PairDayDataEntity>,
     @InjectRepository(PairHourDataEntity) private readonly hourRepo: Repository<PairHourDataEntity>,
+    @InjectRepository(TokenInfoEntity) private readonly tokenRepo: Repository<TokenInfoEntity>,
     @InjectRepository(TxHistoryEntity) private readonly txRepo: Repository<TxHistoryEntity>,
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
   async getPairs(
-    pairs?: string[],
+    pairs: string[],
     pairRepo = this.pairRepo,
     dayRepo = this.dayRepo
   ): Promise<Partial<PairData>[]> {
-    const pairInfos = await pairRepo.find()
+    const result = []
+
+    const pairsInfo = await pairRepo.find({
+      order: { pair: 'DESC' }
+    })
 
     if (!pairs){
       pairs = []
-      for (const pairInfo of pairInfos) {
+      for (const pairInfo of pairsInfo) {
         pairs.push(pairInfo.pair)
       }
     }
 
-    return bluebird
-      .map(pairs, async (pair) => this.getPair(pair, pairRepo, dayRepo))
-      .filter(Boolean)
+    const tokensInfo = await this.tokenRepo.find()
+
+    const pairsLatest: PairDayDataEntity[] = await dayRepo
+      .createQueryBuilder()
+      .distinctOn(['pair'])
+      .orderBy('pair')
+      .addOrderBy('timestamp', 'DESC')
+      .getMany()
+    
+    for (const pair of pairs){
+      // if pair exist
+      if (pairsInfo.find((pairInfo) => pairInfo.pair == pair)) {
+        const pairInfo = pairsInfo.find((pairInfo) => pairInfo.pair == pair)
+
+        const token0Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token0)
+        const token0: Token = {
+          tokenAddress: pairInfo.token0,
+          symbol: token0Info?.symbol,
+          includedPairs: token0Info?.pairs,
+        }
+
+        const token1Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token1)
+        const token1: Token = {
+          tokenAddress: pairInfo.token1,
+          symbol: token1Info?.symbol,
+          includedPairs: token1Info?.pairs,
+        }
+        
+        const pairLatest = pairsLatest.find((pairLatest) => pairLatest.pair == pair)
+        result.push({
+          pairAddress: pair,
+          token0,
+          token1,
+          latestToken0Price: pairLatest ? num(pairLatest.token1Reserve).div(pairLatest.token0Reserve).toFixed(10) : null,
+          latestToken1Price: pairLatest ? num(pairLatest.token0Reserve).div(pairLatest.token1Reserve).toFixed(10) : null,
+          latestLiquidityUST: pairLatest ? pairLatest.liquidityUst : null,
+          lpTokenAddress: pairInfo?.lpToken
+        })
+      }
+    }
+
+    return result
   }
+   
 
   async getPair(
     pair: string,
@@ -71,6 +116,7 @@ export class PairDataService {
     }
   }
 
+  @memoize({ promise: true, maxAge: 600000, primitive: true, length: 1 }) //10min
   async getCommissionAPR(pair: string, repo = this.hourRepo): Promise<string> {
     const now = new Date()
     const recent = new Date(now.valueOf() - 3.6e6)
@@ -96,6 +142,7 @@ export class PairDataService {
     return commissionAPR.toString()
   }
 
+  @memoize({ promise: true, maxAge: 60000, primitive: true, length: 4 })
   async getHistoricalData(
     pair: string,
     from: number,
