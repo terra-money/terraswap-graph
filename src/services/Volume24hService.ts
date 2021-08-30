@@ -1,3 +1,4 @@
+import memoize from 'memoizee-decorator'
 import { Service, Inject, Container } from 'typedi'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -13,6 +14,7 @@ export class Volume24hService {
     @Inject((type) => TokenService) private readonly tokenService: TokenService
   ) {}
 
+  @memoize({ promise: true, maxAge: 600000, primitive: true, length: 1 })
   async getVolume24h(
     pair: string,
     repo = this.repo,
