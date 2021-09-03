@@ -120,7 +120,7 @@ export async function updateLpTokenShare(
   return pairRepo.save(lastData)
 }
 
-async function updateOrAddTxns(
+export async function updateOrAddTxns(
   cycle: Cycle,
   timestamp: number,
   manager: EntityManager,

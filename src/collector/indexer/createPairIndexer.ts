@@ -1,9 +1,10 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
 import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block } from 'types'
+import { Block, Cycle } from 'types'
 import { addTokenInfo, addPairInfo } from './createPairUpdater'
 import { createCreatePairLogFinders } from '../log-finder'
+import { updateOrAddTxns } from './txHistoryUpdater'
 
 const factoryAddress = 'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj'
 
@@ -17,6 +18,7 @@ export async function CreatePairIndexer(
   const Txs = block.Txs
   await mapSeries(Txs, async (tx) => {
     const Logs = tx.Logs
+    const timestamp = tx.TimestampUTC
 
     await mapSeries(Logs, async (log) => {
       const events = log.Events
@@ -35,6 +37,8 @@ export async function CreatePairIndexer(
           await addTokenInfo(tokens, entityManager, transformed.assets[0], transformed.pairAddress)
           await addTokenInfo(tokens, entityManager, transformed.assets[1], transformed.pairAddress)
           await addPairInfo(pairs, entityManager, transformed)
+          await updateOrAddTxns(Cycle.DAY, timestamp, entityManager, transformed.pairAddress)
+          await updateOrAddTxns(Cycle.HOUR, timestamp, entityManager, transformed.pairAddress)
         })
       })
     })

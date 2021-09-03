@@ -61,7 +61,7 @@ export async function NativeTransferIndexer(
 
             await updateExchangeRate(entityManager, updatedReserve, liquidity, timestamp, pair)
 
-            await updateReserves(entityManager, updatedReserve, liquidity, pair)
+            await updateReserves(entityManager, updatedReserve, liquidity, timestamp, pair)
           })
         })
       })
@@ -142,6 +142,7 @@ export async function NonnativeTransferIndexer(
             entityManager,
             updatedReserve,
             liquidity,
+            timestamp,
             transferTransformed.pairAddress
           )
         })

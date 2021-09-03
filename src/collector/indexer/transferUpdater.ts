@@ -200,10 +200,11 @@ export async function updateReserves(
   manager: EntityManager,
   updatedReserve: Reserve,
   liquidity: string,
+  timestamp: number,
   pair: string
 ): Promise<void> {
-  await updateReserve(Cycle.HOUR, manager, updatedReserve, liquidity, pair)
-  await updateReserve(Cycle.DAY, manager, updatedReserve, liquidity, pair)
+  await updateReserve(Cycle.HOUR, manager, updatedReserve, liquidity, timestamp, pair)
+  await updateReserve(Cycle.DAY, manager, updatedReserve, liquidity, timestamp,  pair)
 }
 
 export async function updateTerraswapData(
@@ -285,6 +286,7 @@ async function updateReserve(
   manager: EntityManager,
   updatedReserve: Reserve,
   liquidity: string,
+  timestamp: number,
   pair: string
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
@@ -297,13 +299,61 @@ async function updateReserve(
     order: { timestamp: 'DESC' },
   })
 
-  if (!lastPairData) return
+  const txTime = numberToDate(timestamp, cycle)
 
-  lastPairData.token0Reserve = updatedReserve.token0Reserve
-  lastPairData.token1Reserve = updatedReserve.token1Reserve
-  lastPairData.liquidityUst = liquidity
+  const isSame = txTime.valueOf() === lastPairData?.timestamp?.valueOf()
 
-  return pairRepo.save(lastPairData)
+  if(isSame) {
+    lastPairData.token0Reserve = updatedReserve.token0Reserve
+    lastPairData.token1Reserve = updatedReserve.token1Reserve
+    lastPairData.liquidityUst = liquidity
+    return pairRepo.save(lastPairData)
+  } else{
+    //frist data
+    if (lastPairData === undefined) {
+      const pairInfoRepo = manager.getRepository(PairInfoEntity)
+  
+      const pairInfo = await pairInfoRepo.findOne({
+        where: [{ pair }],
+      })
+  
+      if (!pairInfo) return
+  
+      const pairData = new PairDayDataEntity({
+        timestamp: txTime,
+        pair,
+        token0: pairInfo.token0,
+        token0Volume: '0',
+        token0Reserve: updatedReserve.token0Reserve,
+        token1: pairInfo.token1,
+        token1Volume: '0',
+        token1Reserve: updatedReserve.token1Reserve,
+        totalLpTokenShare: '0',
+        volumeUst: '0',
+        liquidityUst: liquidity,
+        txns: 0,
+      })
+  
+      return pairRepo.save(pairData)
+    } else {
+      const pairData = new PairDataEntity({
+        timestamp: txTime,
+        pair,
+        token0: lastPairData.token0,
+        token0Volume: '0',
+        token0Reserve: updatedReserve.token0Reserve,
+        token1: lastPairData.token1,
+        token1Volume: '0',
+        token1Reserve: updatedReserve.token1Reserve,
+        totalLpTokenShare: lastPairData.totalLpTokenShare,
+        volumeUst: '0',
+        liquidityUst: liquidity,
+        txns: 0,
+      })
+
+      return pairRepo.save(pairData)
+    }
+  }
 }
 
 function changeInfinitePirceToZero(number0: string, number1: string): string {
