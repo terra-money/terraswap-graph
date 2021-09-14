@@ -9,19 +9,31 @@ import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
 import { updateTerraswapData } from './indexer/transferUpdater'
 
+const columbus4EndHeight = 4_724_000
+
+const chainId = process.env.TERRA_CHAIN_ID 
+
 export async function collect(
   pairList: Record<string, boolean>,
   tokenList: Record<string, boolean>
 ): Promise<void> {
-  const latestBlock = await getLatestBlock().catch(errorHandler)
+  //latest Height or end Height
+  let latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
+
+  if (chainId == 'columbus-4' && latestBlock > columbus4EndHeight){
+    latestBlock = columbus4EndHeight
+  }
 
   const collectedBlock = await getCollectedBlock()
 
   const lastHeight = collectedBlock.height
 
   if (latestBlock === lastHeight) {
+    if (lastHeight == columbus4EndHeight) 
+      throw new Error(`columbus-4 ended at height ${columbus4EndHeight}. Please change terraswap graph to the columbus-5 version`)
+
     await delay(500)
     return
   }
