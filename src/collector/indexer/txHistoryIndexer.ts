@@ -1,7 +1,6 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
-import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block, Cycle, ExchangeRate } from 'types'
+import { Tx, Cycle, ExchangeRate } from 'types'
 import {
   updateTxns,
   updateVolume,
@@ -14,21 +13,20 @@ import { createSPWFinder } from '../log-finder'
 export async function TxHistoryIndexer(
   pairAddresses: Record<string, boolean>,
   entityManager: EntityManager,
-  block: Block,
+  txs: Tx[],
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinder = createSPWFinder(pairAddresses)
-  const Txs = block.Txs
-  await mapSeries(Txs, async (tx) => {
-    const txHash = tx.TxHash
-    const Logs = tx.Logs
-    const timestamp = tx.TimestampUTC
-    await mapSeries(Logs, async (log) => {
-      const events = log.Events
+
+  await mapSeries(txs, async (tx) => {
+    const txHash = tx.txhash
+    const timestamp = tx.timestamp
+    await mapSeries(tx.logs, async (log) => {
+      const events = log.events
 
       await mapSeries(events, async (event) => {
-        if (event.Attributes.length > 1800) return
-        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.attributes.length > 1800) return
+        const logFounds = logFinder(event)
 
         await mapSeries(logFounds, async (logFound) => {
           if (!logFound) return

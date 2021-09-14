@@ -15,7 +15,7 @@ export async function getTokenInfo(address: string): Promise<TokenInfo | undefin
     }
   }
 
-  const tokenInfo = await getContractStore<TokenInfo>(address, '{"token_info":{}}').catch(
+  const tokenInfo = await getContractStore<TokenInfo>(address, JSON.parse('{"token_info":{}}')).catch(
     (error) => error
   )
 

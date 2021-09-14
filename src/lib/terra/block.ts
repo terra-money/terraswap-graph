@@ -1,51 +1,51 @@
 import { gql } from 'graphql-request'
-import { Block } from 'types'
+import { Tx } from 'types'
 import { mantle } from './mantle'
 
-export async function getBlock(start: number, end: number, limit = 100): Promise<Block[]> {
+export async function getBlock(height: number): Promise<Tx[]> {
   const response = await mantle.request(
     gql`
-      query ($range: [Int!]!, $limit: Int!) {
-        Blocks(Height_range: $range, Limit: $limit, Order: ASC) {
-          Txs {
-            Height
-            TxHash
-            TimestampUTC
-            Logs {
-              Events {
-                Type
-                Attributes {
-                  Key
-                  Value
+      query ($height: Float!) {
+        tx {
+          byHeight(height: $height) {
+            timestamp
+            height
+            txhash
+            logs {
+              msg_index
+              events{
+                type
+                attributes {
+                  key
+                  value
                 }
-              }
-            }
-            Tx {
-              Msg {
-                Type
-                Value
               }
             }
           }
         }
       }
     `,
-    {
-      range: [start, end],
-      limit,
-    }
+    { height }
   )
 
-  return response?.Blocks
+  return response?.tx?.byHeight
 }
 
 export async function getLatestBlock(): Promise<number> {
   const response = await mantle.request(
     gql`
       {
-        LastSyncedHeight
+        tendermint {
+          blockInfo {
+            block {
+              header {
+                height
+              }
+            }
+          }
+        }
       }
     `
   )
-  return response?.LastSyncedHeight
+  return Number(response?.tendermint?.blockInfo?.block?.header?.height)
 }

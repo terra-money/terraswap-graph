@@ -40,12 +40,7 @@ export class PairDataService {
 
     const tokensInfo = await this.tokenRepo.find()
 
-    const pairsLatest: PairDayDataEntity[] = await dayRepo
-      .createQueryBuilder()
-      .distinctOn(['pair'])
-      .orderBy('pair')
-      .addOrderBy('timestamp', 'DESC')
-      .getMany()
+    const pairsLatest = await this.getLatestPairsData()
     
     for (const pair of pairs){
       // if pair exist
@@ -80,6 +75,17 @@ export class PairDataService {
     }
 
     return result
+  }
+
+  //10sec cache for high cost query
+  @memoize({ promise: true, maxAge: 10000, primitive: true, length: 0 })
+  async getLatestPairsData(): Promise<PairDayDataEntity[]> {
+    return this.dayRepo
+    .createQueryBuilder()
+    .distinctOn(['pair'])
+    .orderBy('pair')
+    .addOrderBy('timestamp', 'DESC')
+    .getMany()
   }
    
 

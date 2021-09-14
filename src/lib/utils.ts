@@ -48,6 +48,11 @@ export function numberToDate(timestamp: number, cycle: number): Date {
   return new Date(timestamp * 1000 - ((timestamp * 1000) % cycle))
 }
 
+export function stringToDate(timestamp: string, cycle: number): Date {
+  const timestampNumber = new Date(timestamp).valueOf() 
+  return new Date(timestampNumber- (timestampNumber % cycle))
+}
+
 export function dateToNumber(timestamp: Date): number {
   const stringTime = (timestamp.valueOf() / 1000).toFixed(0)
   return parseInt(stringTime)

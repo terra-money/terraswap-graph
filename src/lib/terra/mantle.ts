@@ -14,13 +14,12 @@ export function initMantle(URL: string): GraphQLClient {
   return mantle
 }
 
-export async function getContractStore<T>(address: string, query: string): Promise<T | undefined> {
+export async function getContractStore<T>(address: string, query: JSON): Promise<T | undefined> {
   const response = await mantle.request(
     gql`
-      query ($address: String!, $query: String!) {
-        WasmContractsContractAddressStore(ContractAddress: $address, QueryMsg: $query) {
-          Height
-          Result
+      query ($address: String!, $query: JSON!) {
+        wasm{
+          contractQuery(contractAddress: $address, query: $query) 
         }
       }
     `,
@@ -30,9 +29,9 @@ export async function getContractStore<T>(address: string, query: string): Promi
     }
   )
 
-  if (!response?.WasmContractsContractAddressStore?.Result) {
+  if (!response?.wasm?.contractQuery) {
     return undefined
   }
 
-  return JSON.parse(response.WasmContractsContractAddressStore.Result)
+  return response.wasm.contractQuery
 }

@@ -3,7 +3,7 @@ import { num } from 'lib/num'
 import fetch from 'node-fetch'
 import { ExchangeRate } from 'types'
 
-async function getFromLCD(leftover: string, baseURL = 'https://lcd.terra.dev/') {
+async function getFromLCD(leftover: string, baseURL = process.env.TERRA_LCD) {
   let getted = false
   while (!getted) {
     try {
@@ -22,6 +22,7 @@ async function getFromLCD(leftover: string, baseURL = 'https://lcd.terra.dev/') 
 }
 
 export async function getOracleExchangeRate(block: number): Promise<ExchangeRate> {
+  if (Number(process.env.START_BLOCK_HEIGHT) + 100 > block) block += 100 
   let res = await getFromLCD('oracle/denoms/exchange_rates?height=' + block.toString())
   if (res && res.reulst == null) {
     let index = 1

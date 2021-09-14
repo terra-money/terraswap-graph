@@ -7,7 +7,7 @@ import {
   PairDataEntity,
   TerraswapDayDataEntity,
 } from 'orm'
-import { compareLiquidity, numberToDate, isNative } from 'lib/utils'
+import { compareLiquidity, stringToDate, isNative } from 'lib/utils'
 import { Cycle, Asset, ExchangeRate } from 'types'
 import { getTokenPriceAsUST } from './common'
 import { num } from 'lib/num'
@@ -81,7 +81,7 @@ export function addReserve(reserve: Reserve, transformedAsset: Asset): Reserve {
 export async function getLiquidityAsUST(
   manager: EntityManager,
   tokenReserve: Reserve,
-  timestamp: number,
+  timestamp: string,
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
   //case1. uusd exist
@@ -96,7 +96,7 @@ export async function getLiquidityAsUST(
     const token0Price = await getTokenPriceAsUST(
       manager,
       tokenReserve.token0,
-      new Date(timestamp * 1000),
+      new Date(timestamp),
       exchangeRate
     )
 
@@ -113,7 +113,7 @@ export async function getLiquidityAsUST(
     const tokenPrice = await getTokenPriceAsUST(
       manager,
       nativeTokenIndex == 0 ? tokenReserve.token0 : tokenReserve.token1,
-      new Date(timestamp * 1000),
+      new Date(timestamp),
       exchangeRate
     )
 
@@ -127,14 +127,14 @@ export async function getLiquidityAsUST(
     const token0Price = await getTokenPriceAsUST(
       manager,
       tokenReserve.token0,
-      new Date(timestamp * 1000),
+      new Date(timestamp),
       exchangeRate
     )
 
     const token1Price = await getTokenPriceAsUST(
       manager,
       tokenReserve.token1,
-      new Date(timestamp * 1000),
+      new Date(timestamp),
       exchangeRate
     )
 
@@ -148,7 +148,7 @@ export async function updateExchangeRate(
   manager: EntityManager,
   updatedReserve: Reserve,
   liquidity: string,
-  timestamp: number,
+  timestamp: string,
   pair: string
 ): Promise<ExchangeRateEntity> {
   const exchangeRateRepo = manager.getRepository(ExchangeRateEntity)
@@ -158,7 +158,7 @@ export async function updateExchangeRate(
     order: { timestamp: 'DESC' },
   })
 
-  if (lastRate?.timestamp?.valueOf() === numberToDate(timestamp, Cycle.MINUTE).valueOf()) {
+  if (lastRate?.timestamp?.valueOf() === stringToDate(timestamp, Cycle.MINUTE).valueOf()) {
     lastRate.token0Price = changeInfinitePirceToZero(
       updatedReserve.token1Reserve,
       updatedReserve.token0Reserve
@@ -176,7 +176,7 @@ export async function updateExchangeRate(
     return exchangeRateRepo.save(lastRate)
   } else {
     const exchangeRate = new ExchangeRateEntity({
-      timestamp: numberToDate(timestamp, Cycle.MINUTE),
+      timestamp: stringToDate(timestamp, Cycle.MINUTE),
       pair: pair,
       token0: updatedReserve.token0,
       token0Price: changeInfinitePirceToZero(
@@ -200,7 +200,7 @@ export async function updateReserves(
   manager: EntityManager,
   updatedReserve: Reserve,
   liquidity: string,
-  timestamp: number,
+  timestamp: string,
   pair: string
 ): Promise<void> {
   await updateReserve(Cycle.HOUR, manager, updatedReserve, liquidity, timestamp, pair)
@@ -286,7 +286,7 @@ async function updateReserve(
   manager: EntityManager,
   updatedReserve: Reserve,
   liquidity: string,
-  timestamp: number,
+  timestamp: string,
   pair: string
 ): Promise<PairDataEntity | void> {
   const pairRepo = manager.getRepository(
@@ -299,7 +299,7 @@ async function updateReserve(
     order: { timestamp: 'DESC' },
   })
 
-  const txTime = numberToDate(timestamp, cycle)
+  const txTime = stringToDate(timestamp, cycle)
 
   const isSame = txTime.valueOf() === lastPairData?.timestamp?.valueOf()
 

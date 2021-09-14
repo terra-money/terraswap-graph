@@ -1,4 +1,5 @@
 import * as bluebird from 'bluebird'
+import memoize from 'memoizee-decorator'
 import { Container, Service } from 'typedi'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
@@ -11,6 +12,7 @@ export class TokenService {
     @InjectRepository(TokenInfoEntity) private readonly repo: Repository<TokenInfoEntity>
   ) {}
 
+  @memoize({ promise: true, maxAge: 3600000, primitive: true, length: 1 })
   async getToken(token: string, repo = this.repo): Promise<Token> {
     const tokenInfo = await repo.findOne({ where: { tokenAddress: token } })
 

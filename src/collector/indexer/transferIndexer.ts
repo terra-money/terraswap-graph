@@ -1,7 +1,6 @@
 import { EntityManager } from 'typeorm'
-import { Block, ExchangeRate, NonnativeTransferTransformed } from 'types'
+import { Tx, ExchangeRate, NonnativeTransferTransformed } from 'types'
 import { mapSeries } from 'bluebird'
-import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
 import { addMinus } from 'lib/utils'
 import {
   getLatestReserve,
@@ -15,22 +14,20 @@ import { createNativeTransferLogFinders, createNonnativeTransferLogFinder } from
 export async function NativeTransferIndexer(
   pairAddresses: Record<string, boolean>,
   entityManager: EntityManager,
-  block: Block,
+  txs: Tx[],
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinder = createNativeTransferLogFinders()
-  const Txs = block.Txs
 
-  await mapSeries(Txs, async (tx) => {
-    const Logs = tx.Logs
-    const timestamp = tx.TimestampUTC
+  await mapSeries(txs, async (tx) => {
+    const timestamp = tx.timestamp
 
-    await mapSeries(Logs, async (log) => {
-      const events = log.Events
+    await mapSeries(tx.logs, async (log) => {
+      const events = log.events
 
       await mapSeries(events, async (event) => {
-        if (event.Attributes.length > 1800) return
-        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.attributes.length > 1800) return
+        const logFounds = logFinder(event)
 
         await mapSeries(logFounds, async (logFound) => {
           if (!logFound) return
@@ -73,22 +70,20 @@ export async function NonnativeTransferIndexer(
   pairAddresses: Record<string, boolean>,
   tokenAddresses: Record<string, boolean>,
   entityManager: EntityManager,
-  block: Block,
+  txs: Tx[],
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const logFinder = createNonnativeTransferLogFinder()
-  const Txs = block.Txs
 
-  await mapSeries(Txs, async (tx) => {
-    const Logs = tx.Logs
-    const timestamp = tx.TimestampUTC
+  await mapSeries(txs, async (tx) => {
+    const timestamp = tx.timestamp
 
-    await mapSeries(Logs, async (log) => {
-      const events = log.Events
+    await mapSeries(tx.logs, async (log) => {
+      const events = log.events
 
       await mapSeries(events, async (event) => {
-        if (event.Attributes.length > 1800) return
-        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.attributes.length > 1800) return
+        const logFounds = logFinder(event)
 
         await mapSeries(logFounds, async (logFound) => {
           if (!logFound) return

@@ -9,12 +9,12 @@ import {
   Recent24hEntity,
 } from 'orm'
 import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
-import { isNative, addMinus, numberToDate, isTokenOrderedWell, compareLiquidity } from 'lib/utils'
+import { isNative, addMinus, stringToDate, isTokenOrderedWell, compareLiquidity } from 'lib/utils'
 import { getTokenPriceAsUST } from './common'
 import { num } from 'lib/num'
 
 export async function updateTxns(
-  timestamp: number,
+  timestamp: string,
   manager: EntityManager,
   pair: string
 ): Promise<void> {
@@ -34,7 +34,7 @@ export async function updateVolume(
 export async function updateVolume24h(
   manager: EntityManager,
   transformed: TxHistoryTransformed,
-  timestamp: number,
+  timestamp: string,
   exchangeRate: ExchangeRate | undefined
 ): Promise<void> {
   const recent24hRepo = manager.getRepository(Recent24hEntity)
@@ -46,7 +46,7 @@ export async function updateVolume24h(
   await recent24hRepo.save(
     new Recent24hEntity({
       pair: transformed.pair,
-      timestamp: new Date(timestamp * 1000),
+      timestamp: new Date(timestamp),
       token0: isRightOrder ? transformed.assets[0].token : transformed.assets[1].token,
       token1: isRightOrder ? transformed.assets[1].token : transformed.assets[0].token,
       token0Volume: isRightOrder
@@ -57,7 +57,7 @@ export async function updateVolume24h(
         : Math.abs(Number(transformed.assets[0].amount)).toString(),
       volumeUst: await changeVolumeAsUST(
         manager,
-        new Date(timestamp * 1000),
+        new Date(timestamp),
         transformed,
         exchangeRate
       ),
@@ -67,7 +67,7 @@ export async function updateVolume24h(
 
 export async function addTxHistory(
   manager: EntityManager,
-  timestamp: number,
+  timestamp: string,
   txHash: string,
   transformed: TxHistoryTransformed
 ): Promise<TxHistoryEntity> {
@@ -79,7 +79,7 @@ export async function addTxHistory(
   ])
 
   const txHistory = new TxHistoryEntity({
-    timestamp: new Date(timestamp * 1000),
+    timestamp: new Date(timestamp),
     tx_hash: txHash,
     pair: transformed.pair,
     action: transformed.action,
@@ -122,7 +122,7 @@ export async function updateLpTokenShare(
 
 export async function updateOrAddTxns(
   cycle: Cycle,
-  timestamp: number,
+  timestamp: string,
   manager: EntityManager,
   pair: string
 ): Promise<PairDataEntity | void> {
@@ -135,7 +135,7 @@ export async function updateOrAddTxns(
     order: { timestamp: 'DESC' },
   })
 
-  const txTime = numberToDate(timestamp, cycle)
+  const txTime = stringToDate(timestamp, cycle)
 
   const isSame = txTime.valueOf() === lastPairData?.timestamp?.valueOf()
 
@@ -190,7 +190,7 @@ export async function updateOrAddTxns(
 }
 
 export async function generateTerraswapRow(
-  timestamp: number,
+  timestamp: string,
   manager: EntityManager
 ): Promise<TerraswapDayDataEntity | void> {
   const terraswapRepo = manager.getRepository(TerraswapDayDataEntity)
@@ -199,7 +199,7 @@ export async function generateTerraswapRow(
     order: { timestamp: 'DESC' },
   })
 
-  const txTime = numberToDate(timestamp, Cycle.DAY)
+  const txTime = stringToDate(timestamp, Cycle.DAY)
 
   const isSame = txTime.valueOf() === lastData?.timestamp?.valueOf()
 

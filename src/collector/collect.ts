@@ -9,46 +9,54 @@ import { delete24hData } from './deleteOldData'
 import { BlockEntity } from '../orm'
 import { updateTerraswapData } from './indexer/transferUpdater'
 
+const columbus4EndHeight = 4_724_000
+
+const chainId = process.env.TERRA_CHAIN_ID 
+
 export async function collect(
   pairList: Record<string, boolean>,
   tokenList: Record<string, boolean>
 ): Promise<void> {
-  const latestBlock = await getLatestBlock().catch(errorHandler)
+  //latest Height or end Height
+  let latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
+
+  if (chainId == 'columbus-4'){
+    latestBlock = columbus4EndHeight
+  }
 
   const collectedBlock = await getCollectedBlock()
 
   const lastHeight = collectedBlock.height
 
+  // initial exchange rate
+  let exchangeRate = await getOracleExchangeRate(lastHeight - (lastHeight % 100))
+
   if (latestBlock === lastHeight) {
+    lastHeight == columbus4EndHeight 
+     && logger.info(`columbus-4 ended at height ${columbus4EndHeight}. Please change your environment chain id to columbus-5`)
     await delay(500)
     return
   }
+  for (let height = lastHeight + 1; height <= latestBlock; height ++) {
+    const block = await getBlock(height).catch(errorHandler)
+    if (!block) return
 
-  const blockCounts = 100
-
-  for (let i = lastHeight + 1; i <= latestBlock; i += blockCounts) {
-    const endblock = i + blockCounts - 1 < latestBlock ? i + blockCounts - 1 : latestBlock
-    const blocks = await getBlock(i, endblock, blockCounts).catch(errorHandler)
-    if (!blocks) return
-
-    const exchangeRate = await getOracleExchangeRate(endblock - (endblock % 100)).catch(
-      errorHandler
-    )
-
-    if (!exchangeRate) return
+    if (height % 100 == 0){
+      exchangeRate = await getOracleExchangeRate(height)
+    }
 
     await getManager().transaction(async (manager: EntityManager) => {
-      for (const block of blocks) {
-        if (block.Txs[0] != undefined) {
+      if (!(latestBlock === lastHeight && block[0] === undefined)) {
+        if(block[0] !== undefined){
           await runIndexers(manager, block, exchangeRate, pairList, tokenList)
-          await updateBlock(collectedBlock, block.Txs[0].Height, manager.getRepository(BlockEntity))
+          await updateTerraswapData(manager)
         }
+        await updateBlock(collectedBlock, height, manager.getRepository(BlockEntity))
       }
       await delete24hData(manager, new Date().valueOf())
-      await updateTerraswapData(manager)
     })
-    logger.info(`collected: ${endblock} / latest height: ${latestBlock}`)
+    if (height % 100 == 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
   }
 }

@@ -1,31 +1,32 @@
 import { EntityManager } from 'typeorm'
 import { mapSeries } from 'bluebird'
-import { convertLegacyMantleEventsToNew } from '@terra-money/hive/compatibility/legacy-mantle'
-import { Block, Cycle } from 'types'
+import { Tx, Cycle } from 'types'
 import { addTokenInfo, addPairInfo } from './createPairUpdater'
 import { createCreatePairLogFinders } from '../log-finder'
 import { updateOrAddTxns } from './txHistoryUpdater'
 
-const factoryAddress = 'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj'
+//const factoryAddress = 'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj'
+
+const factoryAddress = 'terra18qpjm4zkvqnpjpw0zn0tdr8gdzvt8au35v45xf'
+
 
 export async function CreatePairIndexer(
   pairs: Record<string, boolean>,
   tokens: Record<string, boolean>,
   entityManager: EntityManager,
-  block: Block
+  txs: Tx[]
 ): Promise<void> {
   const logFinder = createCreatePairLogFinders(factoryAddress)
-  const Txs = block.Txs
-  await mapSeries(Txs, async (tx) => {
-    const Logs = tx.Logs
-    const timestamp = tx.TimestampUTC
+  await mapSeries(txs, async (tx) => {
+    const Logs = tx.logs
+    const timestamp = tx.timestamp
 
     await mapSeries(Logs, async (log) => {
-      const events = log.Events
+      const events = log.events
 
       await mapSeries(events, async (event) => {
-        if (event.Attributes.length > 1800) return
-        const logFounds = logFinder(convertLegacyMantleEventsToNew(event))
+        if (event.attributes.length > 1800) return
+        const logFounds = logFinder(event)
 
         await mapSeries(logFounds, async (logFound) => {
           if (!logFound) return
