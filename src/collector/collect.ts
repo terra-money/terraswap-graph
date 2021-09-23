@@ -17,28 +17,27 @@ export async function collect(
   pairList: Record<string, boolean>,
   tokenList: Record<string, boolean>
 ): Promise<void> {
-  //latest Height or end Height
-  let latestBlock = await getLatestBlock().catch(errorHandler)
+  const latestBlock = await getLatestBlock().catch(errorHandler)
 
   if (!latestBlock) return
-
-  if (chainId == 'columbus-4'){
-    latestBlock = columbus4EndHeight
-  }
 
   const collectedBlock = await getCollectedBlock()
 
   const lastHeight = collectedBlock.height
 
+
+  if (chainId == 'columbus-4' || lastHeight < columbus4EndHeight){
+    throw new Error (`this version is for the columbus-5, you have to collect columbus-4 data by using columbus-4 version of terraswap-graph first`)
+  }
+
   // initial exchange rate
   let exchangeRate = await getOracleExchangeRate(lastHeight - (lastHeight % 100))
 
   if (latestBlock === lastHeight) {
-    lastHeight == columbus4EndHeight 
-     && logger.info(`columbus-4 ended at height ${columbus4EndHeight}. Please change your environment chain id to columbus-5`)
     await delay(500)
     return
   }
+
   for (let height = lastHeight + 1; height <= latestBlock; height ++) {
     const block = await getBlock(height).catch(errorHandler)
     if (!block) return

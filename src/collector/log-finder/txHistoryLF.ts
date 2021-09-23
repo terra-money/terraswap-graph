@@ -3,30 +3,6 @@ import { trimAssets, addMinus } from 'lib/utils'
 import { TxHistoryTransformed } from 'types'
 import * as logRules from './log-rules'
 
-const columbus4Index = {
-  asset0Token: 2,
-  asset0Amount: 4,
-  asset1Token: 3,
-  asset1Amount: 5,
-  provideAssets: 2,
-  provideShare: 3,
-  withdrawAssets: 3,
-  withdrawShare: 2
-}
-
-const columbus5Index = {
-  asset0Token: 4,
-  asset0Amount: 6,
-  asset1Token: 5,
-  asset1Amount: 7,
-  provideAssets: 4,
-  provideShare: 5,
-  withdrawAssets: 4,
-  withdrawShare: 3
-}
-
-const logIndex = process.env.TERRA_CHAIN_ID == 'columbus-4' ? columbus4Index : columbus5Index
-
 export function createSPWFinder(
   pairAddresses: Record<string, boolean>
 ): ReturningLogFinderMapper<TxHistoryTransformed> {
@@ -46,16 +22,16 @@ export function createSPWFinder(
       let share = '0'
 
       if (action == 'swap') {
-        assets[0].token = match[logIndex.asset0Token].value
-        assets[0].amount = match[logIndex.asset0Amount].value
-        assets[1].token = match[logIndex.asset1Token].value
-        assets[1].amount = addMinus(match[logIndex.asset1Amount].value)
+        assets[0].token = match[4].value
+        assets[0].amount = match[6].value
+        assets[1].token = match[5].value
+        assets[1].amount = addMinus(match[7].value)
       } else if (action == 'provide_liquidity') {
-        assets = trimAssets(match[logIndex.provideAssets].value, true)
-        share = match[logIndex.provideShare].value
+        assets = trimAssets(match[4].value, true)
+        share = match[5].value
       } else if (action == 'withdraw_liquidity') {
-        assets = trimAssets(match[logIndex.withdrawAssets].value, false)
-        share = match[logIndex.withdrawShare].value
+        assets = trimAssets(match[4].value, false)
+        share = match[3].value
       }
 
       const transformed = {
