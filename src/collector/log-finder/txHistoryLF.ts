@@ -22,16 +22,16 @@ export function createSPWFinder(
       let share = '0'
 
       if (action == 'swap') {
-        assets[0].token = match[2].value
-        assets[0].amount = match[4].value
-        assets[1].token = match[3].value
-        assets[1].amount = addMinus(match[5].value)
+        assets[0].token = match[4].value
+        assets[0].amount = match[6].value
+        assets[1].token = match[5].value
+        assets[1].amount = addMinus(match[7].value)
       } else if (action == 'provide_liquidity') {
-        assets = trimAssets(match[2].value, true)
-        share = match[3].value
+        assets = trimAssets(match[4].value, true)
+        share = match[5].value
       } else if (action == 'withdraw_liquidity') {
-        assets = trimAssets(match[3].value, false)
-        share = match[2].value
+        assets = trimAssets(match[4].value, false)
+        share = match[3].value
       }
 
       const transformed = {

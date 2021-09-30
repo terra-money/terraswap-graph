@@ -30,6 +30,14 @@ export async function collect(
 
   const lastHeight = collectedBlock.height
 
+
+  if (chainId == 'columbus-4' || lastHeight < columbus4EndHeight){
+    throw new Error (`this version is for the columbus-5, you have to collect columbus-4 data by using columbus-4 version of terraswap-graph first`)
+  }
+
+  // initial exchange rate
+  let exchangeRate = await getOracleExchangeRate(lastHeight - (lastHeight % 100))
+
   if (latestBlock === lastHeight) {
     if (lastHeight == columbus4EndHeight) 
       throw new Error(`columbus-4 ended at height ${columbus4EndHeight}. Please change terraswap graph to the columbus-5 version`)
@@ -38,29 +46,24 @@ export async function collect(
     return
   }
 
-  const blockCounts = 100
+  for (let height = lastHeight + 1; height <= latestBlock; height ++) {
+    const block = await getBlock(height).catch(errorHandler)
+    if (!block) return
 
-  for (let i = lastHeight + 1; i <= latestBlock; i += blockCounts) {
-    const endblock = i + blockCounts - 1 < latestBlock ? i + blockCounts - 1 : latestBlock
-    const blocks = await getBlock(i, endblock, blockCounts).catch(errorHandler)
-    if (!blocks) return
-
-    const exchangeRate = await getOracleExchangeRate(endblock - (endblock % 100)).catch(
-      errorHandler
-    )
-
-    if (!exchangeRate) return
+    if (height % 100 == 0){
+      exchangeRate = await getOracleExchangeRate(height)
+    }
 
     await getManager().transaction(async (manager: EntityManager) => {
-      for (const block of blocks) {
-        if (block.Txs[0] != undefined) {
+      if (!(latestBlock === lastHeight && block[0] === undefined)) {
+        if(block[0] !== undefined){
           await runIndexers(manager, block, exchangeRate, pairList, tokenList)
-          await updateBlock(collectedBlock, block.Txs[0].Height, manager.getRepository(BlockEntity))
+          await updateTerraswapData(manager)
         }
+        await updateBlock(collectedBlock, height, manager.getRepository(BlockEntity))
       }
       await delete24hData(manager, new Date().valueOf())
-      await updateTerraswapData(manager)
     })
-    logger.info(`collected: ${endblock} / latest height: ${latestBlock}`)
+    if (height % 100 == 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
   }
 }

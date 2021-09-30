@@ -8,6 +8,9 @@ import { Cycle } from 'types'
 import { TokenService } from './TokenService'
 import { PairData, PairHistoricalData, Transaction, Token } from 'graphql/schema'
 import { num } from 'lib/num'
+import { whiteList } from 'assets/whiteList'
+
+const whiteListPair: { [key: string]: string } = whiteList.pair
 
 @Service()
 export class PairDataService {
@@ -22,8 +25,7 @@ export class PairDataService {
 
   async getPairs(
     pairs: string[],
-    pairRepo = this.pairRepo,
-    dayRepo = this.dayRepo
+    pairRepo = this.pairRepo
   ): Promise<Partial<PairData>[]> {
     const result = []
 
@@ -34,18 +36,15 @@ export class PairDataService {
     if (!pairs){
       pairs = []
       for (const pairInfo of pairsInfo) {
-        pairs.push(pairInfo.pair)
+        if(whiteListPair[pairInfo.pair]){
+          pairs.push(pairInfo.pair)
+        }
       }
     }
 
     const tokensInfo = await this.tokenRepo.find()
 
-    const pairsLatest: PairDayDataEntity[] = await dayRepo
-      .createQueryBuilder()
-      .distinctOn(['pair'])
-      .orderBy('pair')
-      .addOrderBy('timestamp', 'DESC')
-      .getMany()
+    const pairsLatest = await this.getLatestPairsData()
     
     for (const pair of pairs){
       // if pair exist
@@ -81,6 +80,17 @@ export class PairDataService {
 
     return result
   }
+
+  //10sec cache for high cost query
+  @memoize({ promise: true, maxAge: 10000, primitive: true, length: 0 })
+  async getLatestPairsData(): Promise<PairDayDataEntity[]> {
+    return this.dayRepo
+    .createQueryBuilder()
+    .distinctOn(['pair'])
+    .orderBy('pair')
+    .addOrderBy('timestamp', 'DESC')
+    .getMany()
+  }
    
 
   async getPair(
@@ -92,7 +102,7 @@ export class PairDataService {
       where: { pair }
     })
 
-    if (!pairInfo) return undefined
+    if (!pairInfo || !whiteListPair[pair]) return undefined
 
     // pair: lpToken
     const lpToken = pairInfo.lpToken
