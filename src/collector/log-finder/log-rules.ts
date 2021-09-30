@@ -2,7 +2,7 @@ import { LogFinderRule } from '@terra-money/log-finder'
 
 export function createPairRule(factoryAddress: string): LogFinderRule {
   return {
-    type: 'from_contract',
+    type: 'wasm',
     attributes: [
       ['contract_address', factoryAddress],
       ['action', 'create_pair'],
@@ -16,7 +16,7 @@ export function createPairRule(factoryAddress: string): LogFinderRule {
 // swap, provide and withdraw rule
 export function spwRule(): LogFinderRule {
   return {
-    type: 'from_contract',
+    type: 'wasm',
     attributes: [
       ['contract_address'],
       [
@@ -30,7 +30,7 @@ export function spwRule(): LogFinderRule {
 
 export function nonnativeTransferRule(): LogFinderRule {
   return {
-    type: 'from_contract',
+    type: 'wasm',
     attributes: [
       ['contract_address'],
       [
@@ -48,7 +48,7 @@ export function nonnativeTransferRule(): LogFinderRule {
 
 export function nonnativeTransferRuleFrom(): LogFinderRule {
   return {
-    type: 'from_contract',
+    type: 'wasm',
     attributes: [
       ['contract_address'],
       ['action', (value) => value == 'transfer_from' || value == 'send_from'],

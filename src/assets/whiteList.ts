@@ -43,7 +43,8 @@ export const whiteList = {
     terra1pn20mcwnmeyxf68vpt3cyel3n57qm9mp289jta: 'LOTA-UST',
     terra12mzh5cp6tgc65t2cqku5zvkjj8xjtuv5v9whyd: 'MIAW-UST',
     terra1zz39wfyyqt4tjz7dz6p7s9c8pwmcw2xzde3xl8: 'DPH-UST',
-    terra10l7zllh9hduam4tugygj9x3f6976auj2xeyegp: 'DAN-LUNA'
+    terra10l7zllh9hduam4tugygj9x3f6976auj2xeyegp: 'DAN-LUNA',
+    terra1wrwf3um5vm30vpwnlpvjzgwpf5fjknt68nah05: 'LUNAHODL'
   },
   token: {
     uusd: 'UST',
@@ -89,6 +90,8 @@ export const whiteList = {
     terra1ez46kxtulsdv07538fh5ra5xj8l68mu8eg24vr: 'LOTA',
     terra1vtr50tw0pgqpes34zqu60n554p9x4950wk8f63: 'MIAW',
     terra17jnhankdfl8vyzj6vejt7ag8uz0cjc9crkl2h7: 'DPH',
-    terra1vru3mk2ne3jqpwg24wm5mg2356cg5ead0tae2s: 'DAN'
+    terra1vru3mk2ne3jqpwg24wm5mg2356cg5ead0tae2s: 'DAN',
+    terra17dkr9rnmtmu7x4azrpupukvur2crnptyfvsrvr: "LUNA-UST LP",
+    terra1nuy34nwnsh53ygpc4xprlj263cztw7vc99leh2: "bLUNA-LUNA LP"
   }
 }
