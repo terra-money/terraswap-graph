@@ -5,10 +5,9 @@ import { addTokenInfo, addPairInfo } from './createPairUpdater'
 import { createCreatePairLogFinders } from '../log-finder'
 import { updateOrAddTxns } from './txHistoryUpdater'
 
-//const factoryAddress = 'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj'
-
-const factoryAddress = 'terra18qpjm4zkvqnpjpw0zn0tdr8gdzvt8au35v45xf'
-
+const factoryAddress = process.env.TERRA_CHAIN_ID.indexOf('columbus') === -1
+  ?'terra18qpjm4zkvqnpjpw0zn0tdr8gdzvt8au35v45xf' //testnet
+  :'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj' //mainnet
 
 export async function CreatePairIndexer(
   pairs: Record<string, boolean>,
