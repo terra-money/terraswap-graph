@@ -2,7 +2,7 @@
 
 ## Modules
 * ### Indexer
-  * Get tx logs from mantle (https://mantle.terra.dev) and store terraswap relative data into the database 
+  * Get tx logs from mantle (https://hive.terra.dev/graphql) and store terraswap relative data into the database 
   * Collect hourly/daily reserve, volume and transaction count of each pairs
   * Collect recent 24 hours swap data to serve recent volume
   * Collect minutely exchage rate of each pairs
@@ -100,8 +100,8 @@
       TZ='UTC'
       
       export TERRA_LCD='https://lcd.terra.dev'
-      export TERRA_CHAIN_ID='columbus-4'
-      export TERRA_MANTLE='https://mantle.terra.dev'
+      export TERRA_CHAIN_ID='columbus-5'
+      export TERRA_MANTLE='https://hive.terra.dev/graphql'
 
       export START_BLOCK_HEIGHT=549000
       ```
