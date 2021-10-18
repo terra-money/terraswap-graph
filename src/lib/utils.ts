@@ -10,6 +10,9 @@ export function addMinus(n: string): string {
 }
 
 export function trimAssets(rawAssets: string, inflow: boolean): AssetInfo[] {
+  // if assets === null
+  if (!rawAssets) return []
+  
   const assets = rawAssets.split(',').map((e) => e.trim())
   return assets
     .map((e) => {
