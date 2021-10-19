@@ -46,7 +46,7 @@ export const whiteList = {
     terra10l7zllh9hduam4tugygj9x3f6976auj2xeyegp: 'DAN-LUNA',
     terra1wrwf3um5vm30vpwnlpvjzgwpf5fjknt68nah05: 'LUNAHODL',
     terra1etdkg9p0fkl8zal6ecp98kypd32q8k3ryced9d: 'TWD-UST',
-    terra1e59utusv5rspqsu8t37h5w887d9rdykljedxw0: 'VKR-UST'
+    terra1e59utusv5rspqsu8t37h5w887d9rdykljedxw0: 'VKR-UST',
   },
   token: {
     uusd: 'UST',
@@ -96,6 +96,6 @@ export const whiteList = {
     terra17dkr9rnmtmu7x4azrpupukvur2crnptyfvsrvr: "LUNA-UST LP",
     terra1nuy34nwnsh53ygpc4xprlj263cztw7vc99leh2: "bLUNA-LUNA LP",
     terra19djkaepjjswucys4npd5ltaxgsntl7jf0xz7w6: 'TWD',
-    terra1dy9kmlm4anr92e42mrkjwzyvfqwz66un00rwr5: 'VKR'
+    terra1dy9kmlm4anr92e42mrkjwzyvfqwz66un00rwr5: 'VKR',
   }
 }
