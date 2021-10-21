@@ -65,5 +65,6 @@ export async function collect(
       await delete24hData(manager, new Date().valueOf())
     })
     if (height % 100 == 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
+    await delay(100)
   }
 }
