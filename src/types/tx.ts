@@ -4,12 +4,14 @@ export interface Tx {
   height: number
   logs: {
     msg_index: number
-    events: {
-      type: string
-      attributes: {
-        key: string
-        value: string
-      }[]
-    }[]
+    events: Event[]
+  }[]
+}
+
+export interface Event {
+  type: string
+  attributes: {
+    key: string
+    value: string
   }[]
 }

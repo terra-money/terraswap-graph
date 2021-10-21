@@ -1,5 +1,5 @@
 import { EntityManager } from 'typeorm'
-import { Tx, ExchangeRate, NonnativeTransferTransformed } from 'types'
+import { ExchangeRate, NonnativeTransferTransformed, NativeTransferTransformed } from 'types'
 import { mapSeries } from 'bluebird'
 import { addMinus } from 'lib/utils'
 import {
@@ -9,140 +9,101 @@ import {
   updateExchangeRate,
   updateReserves,
 } from './transferUpdater'
-import { createNativeTransferLogFinders, createNonnativeTransferLogFinder } from '../log-finder'
+import { ReturningLogFinderResult } from '@terra-money/log-finder'
 
 export async function NativeTransferIndexer(
-  pairAddresses: Record<string, boolean>,
-  entityManager: EntityManager,
-  txs: Tx[],
-  exchangeRate: ExchangeRate | undefined
+  pairList: Record<string, boolean>,
+  manager: EntityManager,
+  exchangeRate: ExchangeRate | undefined,
+  timestamp: string,
+  founds: ReturningLogFinderResult<NativeTransferTransformed[]>[]
 ): Promise<void> {
-  const logFinder = createNativeTransferLogFinders()
+  await mapSeries(founds, async (logFound) => {
+    if (!logFound) return
 
-  await mapSeries(txs, async (tx) => {
-    const timestamp = tx.timestamp
+    const transformed = logFound.transformed
 
-    await mapSeries(tx.logs, async (log) => {
-      const events = log.events
+    if (!transformed || !transformed[0]) return
 
-      await mapSeries(events, async (event) => {
-        if (event.attributes.length > 1800) return
-        const logFounds = logFinder(event)
+    await mapSeries(transformed, async (transData) => {
+      let pair = ''
+      if (pairList[transData.recipient]) {
+        pair = transData.recipient
+      } else if (pairList[transData.sender]) {
+        pair = transData.sender
+        transData.assets.amount = '-' + transData.assets.amount
+      }
 
-        await mapSeries(logFounds, async (logFound) => {
-          if (!logFound) return
+      if (pair == '') return
 
-          const transformed = logFound.transformed
+      const tokenReserve = await getLatestReserve(manager, pair)
+      const updatedReserve = addReserve(tokenReserve, transData.assets)
+      const liquidity = await getLiquidityAsUST(
+        manager,
+        updatedReserve,
+        timestamp,
+        exchangeRate
+      )
 
-          if (!transformed || !transformed[0]) return
+      updateExchangeRate(manager, updatedReserve, liquidity, timestamp, pair)
 
-          await mapSeries(transformed, async (transData) => {
-            let pair = ''
-            if (pairAddresses[transData.recipient]) {
-              pair = transData.recipient
-            } else if (pairAddresses[transData.sender]) {
-              pair = transData.sender
-              transData.assets.amount = '-' + transData.assets.amount
-            }
-
-            if (pair == '') return
-
-            const tokenReserve = await getLatestReserve(entityManager, pair)
-            const updatedReserve = addReserve(tokenReserve, transData.assets)
-            const liquidity = await getLiquidityAsUST(
-              entityManager,
-              updatedReserve,
-              timestamp,
-              exchangeRate
-            )
-
-            await updateExchangeRate(entityManager, updatedReserve, liquidity, timestamp, pair)
-
-            await updateReserves(entityManager, updatedReserve, liquidity, timestamp, pair)
-          })
-        })
-      })
+      updateReserves(manager, updatedReserve, liquidity, timestamp, pair)
     })
   })
 }
 
 export async function NonnativeTransferIndexer(
-  pairAddresses: Record<string, boolean>,
-  tokenAddresses: Record<string, boolean>,
-  entityManager: EntityManager,
-  txs: Tx[],
-  exchangeRate: ExchangeRate | undefined
+  pairList: Record<string, boolean>,
+  tokenList: Record<string, boolean>,
+  manager: EntityManager,
+  timestamp: string,
+  exchangeRate: ExchangeRate | undefined,
+  founds: ReturningLogFinderResult<NonnativeTransferTransformed>[]
 ): Promise<void> {
-  const logFinder = createNonnativeTransferLogFinder()
+  await mapSeries(founds, async (logFound) => {
+    if (!logFound) return
 
-  await mapSeries(txs, async (tx) => {
-    const timestamp = tx.timestamp
+    const transformed = logFound.transformed
 
-    await mapSeries(tx.logs, async (log) => {
-      const events = log.events
+    if (!transformed) return
 
-      await mapSeries(events, async (event) => {
-        if (event.attributes.length > 1800) return
-        const logFounds = logFinder(event)
+    const pairRelative = isPairRelative(transformed, pairList)
 
-        await mapSeries(logFounds, async (logFound) => {
-          if (!logFound) return
+    if (!pairRelative) return
 
-          const transformed = logFound.transformed
+    const validToken = tokenList[transformed.assets.token]
+      ? transformed.assets.token
+      : undefined
 
-          if (!transformed) return
+    if (!validToken) return
 
-          const pairRelative = isPairRelative(transformed, pairAddresses)
+    const transferTransformed = {
+      pairAddress: pairRelative[1],
+      assets: {
+        token: transformed.assets.token,
+        amount:
+          pairRelative[0] === 'to'
+            ? transformed.assets.amount
+            : addMinus(transformed.assets.amount),
+      },
+    }
 
-          if (!pairRelative) return
+    const tokenReserve = await getLatestReserve(
+      manager,
+      transferTransformed.pairAddress
+    )
+    const updatedReserve = addReserve(tokenReserve, transferTransformed.assets)
+    const liquidity = await getLiquidityAsUST(
+      manager,
+      updatedReserve,
+      timestamp,
+      exchangeRate
+    )
 
-          const validToken = tokenAddresses[transformed.assets.token]
-            ? transformed.assets.token
-            : undefined
+    updateExchangeRate(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress)
 
-          if (!validToken) return
-
-          const transferTransformed = {
-            pairAddress: pairRelative[1],
-            assets: {
-              token: transformed.assets.token,
-              amount:
-                pairRelative[0] === 'to'
-                  ? transformed.assets.amount
-                  : addMinus(transformed.assets.amount),
-            },
-          }
-
-          const tokenReserve = await getLatestReserve(
-            entityManager,
-            transferTransformed.pairAddress
-          )
-          const updatedReserve = addReserve(tokenReserve, transferTransformed.assets)
-          const liquidity = await getLiquidityAsUST(
-            entityManager,
-            updatedReserve,
-            timestamp,
-            exchangeRate
-          )
-
-          await updateExchangeRate(
-            entityManager,
-            updatedReserve,
-            liquidity,
-            timestamp,
-            transferTransformed.pairAddress
-          )
-
-          await updateReserves(
-            entityManager,
-            updatedReserve,
-            liquidity,
-            timestamp,
-            transferTransformed.pairAddress
-          )
-        })
-      })
-    })
+    updateReserves(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress
+    )
   })
 }
 
