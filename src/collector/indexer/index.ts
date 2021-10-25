@@ -1,5 +1,6 @@
 import { EntityManager } from 'typeorm'
-import { Tx, ExchangeRate } from 'types'
+import { ReturningLogFinderResult } from '@terra-money/log-finder'
+import { Tx, ExchangeRate, NonnativeTransferTransformed, NativeTransferTransformed } from 'types'
 import { generateTerraswapRow } from './txHistoryUpdater'
 import { createCreatePairLogFinders, createSPWFinder, createNativeTransferLogFinders, createNonnativeTransferLogFinder } from '../log-finder'
 import { mapSeries } from 'bluebird'
@@ -36,23 +37,25 @@ export async function runIndexers(
 
         // createPair
         const createPairLogFounds = createPairLF(event)
-        await CreatePairIndexer(pairList, tokenList, manager, timestamp, createPairLogFounds)
+        createPairLogFounds.length > 0 && await CreatePairIndexer(pairList, tokenList, manager, timestamp, createPairLogFounds)
 
         // txHistory
         const spwfLF = createSPWFinder(pairList)
         const spwfLogFounds = spwfLF(event)
 
-        await TxHistoryIndexer(manager, exchangeRate, timestamp, txHash, spwfLogFounds)
+        spwfLogFounds.length > 0 && await TxHistoryIndexer(manager, exchangeRate, timestamp, txHash, spwfLogFounds)
 
         // native transfer
         const nativeTransferLogFounds = nativeTransferLF(event)
 
-        await NativeTransferIndexer(pairList, manager, exchangeRate, timestamp, nativeTransferLogFounds)
+        isNativePairRelative(nativeTransferLogFounds, pairList)
+        && await NativeTransferIndexer(pairList, manager, exchangeRate, timestamp, nativeTransferLogFounds)
 
         // nonnative transfer
         const nonnativeTransferLogFounds = nonnativeTransferLF(event)
 
-        await NonnativeTransferIndexer(pairList, tokenList, manager, timestamp, exchangeRate, nonnativeTransferLogFounds)
+        isNonnativePairRelative(nonnativeTransferLogFounds, pairList) 
+        && await NonnativeTransferIndexer(pairList, tokenList, manager, timestamp, exchangeRate, nonnativeTransferLogFounds)
       })
     })
   })
@@ -60,4 +63,29 @@ export async function runIndexers(
   if (txs[0]) {
     generateTerraswapRow(txs[0].timestamp, manager)
   }
+}
+
+function isNonnativePairRelative(
+  founds: ReturningLogFinderResult<NonnativeTransferTransformed>[],
+  pairAddresses: Record<string, boolean>
+): boolean {
+  for (const found of founds) {
+    const transformed = found.transformed
+    if (pairAddresses[transformed.addresses.from]) return true
+    if (pairAddresses[transformed.addresses.to]) return true
+  }
+  return false
+}
+
+function isNativePairRelative(
+  founds: ReturningLogFinderResult<NativeTransferTransformed[]>[],
+  pairAddresses: Record<string, boolean>
+): boolean {
+  for (const found of founds) {
+    for(const transformed of found.transformed){
+      if (pairAddresses[transformed.recipient]) return true
+      if (pairAddresses[transformed.sender]) return true
+    }
+  }
+  return false
 }
