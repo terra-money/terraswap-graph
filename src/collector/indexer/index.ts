@@ -3,7 +3,6 @@ import { ReturningLogFinderResult } from '@terra-money/log-finder'
 import { Tx, ExchangeRate, NonnativeTransferTransformed, NativeTransferTransformed } from 'types'
 import { generateTerraswapRow } from './txHistoryUpdater'
 import { createCreatePairLogFinders, createSPWFinder, createNativeTransferLogFinders, createNonnativeTransferLogFinder } from '../log-finder'
-import { mapSeries } from 'bluebird'
 import { CreatePairIndexer } from './createPairIndexer'
 import { TxHistoryIndexer } from './txHistoryIndexer'
 import { NativeTransferIndexer, NonnativeTransferIndexer } from './transferIndexer'
@@ -23,15 +22,15 @@ export async function runIndexers(
   pairList: Record<string, boolean>,
   tokenList: Record<string, boolean>
 ): Promise<void> {
-  await mapSeries(txs, async (tx) => {
+  for(const tx of txs) {
     const Logs = tx.logs
     const timestamp = tx.timestamp
     const txHash = tx.txhash
 
-    await mapSeries(Logs, async (log) => {
+    for(const log of Logs) {
       const events = log.events
 
-      await mapSeries(events, async (event) => {
+      for( const event of events){
         // for spam tx
         if (event.attributes.length > 1800) return
 
@@ -56,9 +55,9 @@ export async function runIndexers(
 
         isNonnativePairRelative(nonnativeTransferLogFounds, pairList) 
         && await NonnativeTransferIndexer(pairList, tokenList, manager, timestamp, exchangeRate, nonnativeTransferLogFounds)
-      })
-    })
-  })
+      }
+    }
+  }
 
   if (txs[0]) {
     generateTerraswapRow(txs[0].timestamp, manager)

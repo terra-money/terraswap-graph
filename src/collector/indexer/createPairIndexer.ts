@@ -1,5 +1,4 @@
 import { EntityManager } from 'typeorm'
-import { mapSeries } from 'bluebird'
 import { Cycle } from 'types'
 import { addTokenInfo, addPairInfo } from './createPairUpdater'
 import { updateOrAddTxns } from './txHistoryUpdater'
@@ -19,17 +18,17 @@ export async function CreatePairIndexer(
 ): Promise<void> {
 
   // createPair
-  await mapSeries(founds, async (logFound) => {
+  for (const logFound of founds) {
     if (!logFound) return
 
     const transformed = logFound.transformed
 
     if (!transformed) return
 
-    addTokenInfo(tokenList, manager, transformed.assets[0], transformed.pairAddress)
-    addTokenInfo(tokenList, manager, transformed.assets[1], transformed.pairAddress)
-    addPairInfo(pairList, manager, transformed)
-    updateOrAddTxns(Cycle.DAY, timestamp, manager, transformed.pairAddress)
-    updateOrAddTxns(Cycle.HOUR, timestamp, manager, transformed.pairAddress)
-  })
+    await addTokenInfo(tokenList, manager, transformed.assets[0], transformed.pairAddress)
+    await addTokenInfo(tokenList, manager, transformed.assets[1], transformed.pairAddress)
+    await addPairInfo(pairList, manager, transformed)
+    await updateOrAddTxns(Cycle.DAY, timestamp, manager, transformed.pairAddress)
+    await updateOrAddTxns(Cycle.HOUR, timestamp, manager, transformed.pairAddress)
+  }
 }

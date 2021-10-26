@@ -1,5 +1,4 @@
 import { EntityManager } from 'typeorm'
-import { mapSeries } from 'bluebird'
 import { Cycle, ExchangeRate, TxHistoryTransformed } from 'types'
 import {
   updateTxns,
@@ -17,7 +16,7 @@ export async function TxHistoryIndexer(
   txHash: string,
   founds: ReturningLogFinderResult<TxHistoryTransformed>[]
 ): Promise<void> {
-  await mapSeries(founds, async (logFound) => {
+  for(const logFound of founds) {
     if (!logFound) return
     const transformed = logFound.transformed
     if (!transformed) return
@@ -30,7 +29,7 @@ export async function TxHistoryIndexer(
       updateLpTokenShare(Cycle.DAY, manager, transformed)
       updateLpTokenShare(Cycle.HOUR, manager, transformed)
     }
-    addTxHistory(manager, timestamp, txHash, transformed) // tx history entithy
-  })
+    await addTxHistory(manager, timestamp, txHash, transformed) // tx history entithy
+  }
   
 }

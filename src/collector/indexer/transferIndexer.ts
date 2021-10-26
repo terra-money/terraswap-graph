@@ -1,6 +1,5 @@
 import { EntityManager } from 'typeorm'
 import { ExchangeRate, NonnativeTransferTransformed, NativeTransferTransformed } from 'types'
-import { mapSeries } from 'bluebird'
 import { addMinus } from 'lib/utils'
 import {
   getLatestReserve,
@@ -18,14 +17,14 @@ export async function NativeTransferIndexer(
   timestamp: string,
   founds: ReturningLogFinderResult<NativeTransferTransformed[]>[]
 ): Promise<void> {
-  await mapSeries(founds, async (logFound) => {
+  for(const logFound of founds) {
     if (!logFound) return
 
     const transformed = logFound.transformed
 
     if (!transformed || !transformed[0]) return
 
-    await mapSeries(transformed, async (transData) => {
+    for (const transData of transformed) {
       let pair = ''
       if (pairList[transData.recipient]) {
         pair = transData.recipient
@@ -45,11 +44,11 @@ export async function NativeTransferIndexer(
         exchangeRate
       )
 
-      updateExchangeRate(manager, updatedReserve, liquidity, timestamp, pair)
+      await updateExchangeRate(manager, updatedReserve, liquidity, timestamp, pair)
 
-      updateReserves(manager, updatedReserve, liquidity, timestamp, pair)
-    })
-  })
+      await updateReserves(manager, updatedReserve, liquidity, timestamp, pair)
+    }
+  }
 }
 
 export async function NonnativeTransferIndexer(
@@ -60,7 +59,7 @@ export async function NonnativeTransferIndexer(
   exchangeRate: ExchangeRate | undefined,
   founds: ReturningLogFinderResult<NonnativeTransferTransformed>[]
 ): Promise<void> {
-  await mapSeries(founds, async (logFound) => {
+  for(const logFound of founds){
     if (!logFound) return
 
     const transformed = logFound.transformed
@@ -100,11 +99,11 @@ export async function NonnativeTransferIndexer(
       exchangeRate
     )
 
-    updateExchangeRate(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress)
+    await updateExchangeRate(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress)
 
-    updateReserves(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress
+    await updateReserves(manager, updatedReserve, liquidity, timestamp, transferTransformed.pairAddress
     )
-  })
+  }
 }
 
 function isPairRelative(
