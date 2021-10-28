@@ -9,6 +9,7 @@ import {
 } from './txHistoryUpdater'
 import { ReturningLogFinderResult } from '@terra-money/log-finder'
 
+
 export async function TxHistoryIndexer(
   manager: EntityManager,
   exchangeRate: ExchangeRate | undefined,
@@ -17,19 +18,18 @@ export async function TxHistoryIndexer(
   founds: ReturningLogFinderResult<TxHistoryTransformed>[]
 ): Promise<void> {
   for(const logFound of founds) {
-    if (!logFound) return
     const transformed = logFound.transformed
-    if (!transformed) return
-
-    await updateTxns(timestamp, manager, transformed.pair) // +1 to txns for pair, terraswap
-    if (transformed.action === 'swap') {
-      updateVolume(manager, transformed, exchangeRate) // pair entity
-      updateVolume24h(manager, transformed, timestamp, exchangeRate) // 24h entity
-    } else {
-      updateLpTokenShare(Cycle.DAY, manager, transformed)
-      updateLpTokenShare(Cycle.HOUR, manager, transformed)
+    if (transformed){
+      await updateTxns(timestamp, manager, transformed.pair) // +1 to txns for pair, terraswap
+      if (transformed.action === 'swap') {
+        await updateVolume(manager, transformed, exchangeRate) // pair entity
+        await updateVolume24h(manager, transformed, timestamp, exchangeRate) // 24h entity
+      } else {
+        await updateLpTokenShare(Cycle.DAY, manager, transformed)
+        await updateLpTokenShare(Cycle.HOUR, manager, transformed)
+      }
+      await addTxHistory(manager, timestamp, txHash, transformed) // tx history entithy
     }
-    await addTxHistory(manager, timestamp, txHash, transformed) // tx history entithy
   }
   
 }

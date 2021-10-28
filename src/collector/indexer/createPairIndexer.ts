@@ -19,16 +19,14 @@ export async function CreatePairIndexer(
 
   // createPair
   for (const logFound of founds) {
-    if (!logFound) return
-
     const transformed = logFound.transformed
 
-    if (!transformed) return
-
-    await addTokenInfo(tokenList, manager, transformed.assets[0], transformed.pairAddress)
-    await addTokenInfo(tokenList, manager, transformed.assets[1], transformed.pairAddress)
-    await addPairInfo(pairList, manager, transformed)
-    await updateOrAddTxns(Cycle.DAY, timestamp, manager, transformed.pairAddress)
-    await updateOrAddTxns(Cycle.HOUR, timestamp, manager, transformed.pairAddress)
+    if (transformed){
+      await addTokenInfo(tokenList, manager, transformed.assets[0], transformed.pairAddress)
+      await addTokenInfo(tokenList, manager, transformed.assets[1], transformed.pairAddress)
+      await addPairInfo(pairList, manager, transformed)
+      await updateOrAddTxns(Cycle.DAY, timestamp, manager, transformed.pairAddress)
+      await updateOrAddTxns(Cycle.HOUR, timestamp, manager, transformed.pairAddress)
+    }
   }
 }
