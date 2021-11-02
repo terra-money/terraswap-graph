@@ -58,13 +58,14 @@ export async function collect(
       if (!(latestBlock === lastHeight && block[0] === undefined)) {
         if(block[0] !== undefined){
           await runIndexers(manager, block, exchangeRate, pairList, tokenList)
-          await updateTerraswapData(manager)
+          height % 100 === 0 && await updateTerraswapData(manager)
         }
         await updateBlock(collectedBlock, height, manager.getRepository(BlockEntity))
       }
       await delete24hData(manager, new Date().valueOf())
     })
     if (height % 100 == 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
+
     await delay(100)
   }
 }

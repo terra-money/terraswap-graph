@@ -1,46 +1,32 @@
 import { EntityManager } from 'typeorm'
-import { mapSeries } from 'bluebird'
-import { Tx, Cycle } from 'types'
+import { Cycle } from 'types'
 import { addTokenInfo, addPairInfo } from './createPairUpdater'
-import { createCreatePairLogFinders } from '../log-finder'
 import { updateOrAddTxns } from './txHistoryUpdater'
+import { ReturningLogFinderResult } from '@terra-money/log-finder'
 
-const factoryAddress = process.env.TERRA_CHAIN_ID.indexOf('columbus') === -1
-  ?'terra18qpjm4zkvqnpjpw0zn0tdr8gdzvt8au35v45xf' //testnet
-  :'terra1ulgw0td86nvs4wtpsc80thv6xelk76ut7a7apj' //mainnet
 
 export async function CreatePairIndexer(
-  pairs: Record<string, boolean>,
-  tokens: Record<string, boolean>,
-  entityManager: EntityManager,
-  txs: Tx[]
+  pairList: Record<string, boolean>,
+  tokenList: Record<string, boolean>,
+  manager: EntityManager,
+  timestamp: string,
+  founds: ReturningLogFinderResult<{
+    assets: string[]
+    pairAddress: string
+    lpTokenAddress: string
+  }>[]
 ): Promise<void> {
-  const logFinder = createCreatePairLogFinders(factoryAddress)
-  await mapSeries(txs, async (tx) => {
-    const Logs = tx.logs
-    const timestamp = tx.timestamp
 
-    await mapSeries(Logs, async (log) => {
-      const events = log.events
+  // createPair
+  for (const logFound of founds) {
+    const transformed = logFound.transformed
 
-      await mapSeries(events, async (event) => {
-        if (event.attributes.length > 1800) return
-        const logFounds = logFinder(event)
-
-        await mapSeries(logFounds, async (logFound) => {
-          if (!logFound) return
-
-          const transformed = logFound.transformed
-
-          if (!transformed) return
-
-          await addTokenInfo(tokens, entityManager, transformed.assets[0], transformed.pairAddress)
-          await addTokenInfo(tokens, entityManager, transformed.assets[1], transformed.pairAddress)
-          await addPairInfo(pairs, entityManager, transformed)
-          await updateOrAddTxns(Cycle.DAY, timestamp, entityManager, transformed.pairAddress)
-          await updateOrAddTxns(Cycle.HOUR, timestamp, entityManager, transformed.pairAddress)
-        })
-      })
-    })
-  })
+    if (transformed){
+      await addTokenInfo(tokenList, manager, transformed.assets[0], transformed.pairAddress)
+      await addTokenInfo(tokenList, manager, transformed.assets[1], transformed.pairAddress)
+      await addPairInfo(pairList, manager, transformed)
+      await updateOrAddTxns(Cycle.DAY, timestamp, manager, transformed.pairAddress)
+      await updateOrAddTxns(Cycle.HOUR, timestamp, manager, transformed.pairAddress)
+    }
+  }
 }
