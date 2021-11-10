@@ -25,6 +25,7 @@ export class TokenService {
       tokenAddress: token,
       symbol: tokenInfo?.symbol,
       includedPairs: tokenInfo?.pairs,
+      decimals: tokenInfo?.decimals,
     }
   }
 
