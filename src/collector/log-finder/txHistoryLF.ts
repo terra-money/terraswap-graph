@@ -21,15 +21,15 @@ export function createSPWFinder(
       ]
       let share = '0'
 
-      if (action == 'swap') {
+      if (action === 'swap') {
         assets[0].token = match[4].value
         assets[0].amount = match[6].value
         assets[1].token = match[5].value
         assets[1].amount = addMinus(match[7].value)
-      } else if (action == 'provide_liquidity') {
+      } else if (action === 'provide_liquidity') {
         assets = trimAssets(match[4].value, true)
         share = match[5].value
-      } else if (action == 'withdraw_liquidity') {
+      } else if (action === 'withdraw_liquidity') {
         assets = trimAssets(match[4].value, false)
         share = match[3].value
       }

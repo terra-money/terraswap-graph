@@ -48,10 +48,10 @@ export class PairDataService {
     
     for (const pair of pairs){
       // if pair exist
-      if (pairsInfo.find((pairInfo) => pairInfo.pair == pair)) {
-        const pairInfo = pairsInfo.find((pairInfo) => pairInfo.pair == pair)
+      if (pairsInfo.find((pairInfo) => pairInfo.pair === pair)) {
+        const pairInfo = pairsInfo.find((pairInfo) => pairInfo.pair === pair)
 
-        const token0Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token0)
+        const token0Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress === pairInfo.token0)
         const token0: Token = {
           tokenAddress: pairInfo.token0,
           symbol: token0Info?.symbol,
@@ -59,7 +59,7 @@ export class PairDataService {
           decimals: token0Info?.decimals,
         }
 
-        const token1Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token1)
+        const token1Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress === pairInfo.token1)
         const token1: Token = {
           tokenAddress: pairInfo.token1,
           symbol: token1Info?.symbol,
@@ -70,7 +70,7 @@ export class PairDataService {
         // token0 decimal - token1 decimal
         const decimalDiff = token0Info.decimals - token1Info.decimals
         
-        const pairLatest = pairsLatest.find((pairLatest) => pairLatest.pair == pair)
+        const pairLatest = pairsLatest.find((pairLatest) => pairLatest.pair === pair)
         result.push({
           pairAddress: pair,
           token0,
@@ -169,7 +169,7 @@ export class PairDataService {
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
   ): Promise<PairHistoricalData[]> {
-    const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
+    const repo = cycle === Cycle.DAY ? dayRepo : hourRepo
     const fromDate = numberToDate(from + cycle / 1000, cycle)
     const toDate = numberToDate(to, cycle)
     let newFrom = await repo.findOne({
@@ -206,7 +206,7 @@ export class PairDataService {
         dateToNumber(tick.timestamp) <= indexTimestamp &&
         indexTimestamp >= dateToNumber(fromDate)
       ) {
-        const isSameTick = dateToNumber(tick.timestamp) == indexTimestamp
+        const isSameTick = dateToNumber(tick.timestamp) === indexTimestamp
 
         pairHistory.push({
           timestamp: indexTimestamp,

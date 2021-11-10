@@ -24,9 +24,9 @@ async function getFromLCD(leftover: string, baseURL = process.env.TERRA_LCD) {
 export async function getOracleExchangeRate(block: number): Promise<ExchangeRate> {
   if (Number(process.env.START_BLOCK_HEIGHT) + 100 > block) block += 100 
   let res = await getFromLCD('/oracle/denoms/exchange_rates?height=' + block.toString())
-  if (res && res.reulst == null) {
+  if (res && res.reulst === null) {
     let index = 1
-    while (res.result == null) {
+    while (res.result === null) {
       res = await getFromLCD(
         '/oracle/denoms/exchange_rates?height=' + (block - index * 100).toString()
       )

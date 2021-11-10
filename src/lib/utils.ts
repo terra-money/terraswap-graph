@@ -26,7 +26,7 @@ export function trimAssets(rawAssets: string, inflow: boolean): AssetInfo[] {
 }
 
 export function isNative(token: string): boolean {
-  return token.slice(0, 6) != 'terra1'
+  return token.slice(0, 6) !== 'terra1'
 }
 
 const tokenOrder = ['uluna', 'uusd', 'ukrw']

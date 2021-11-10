@@ -38,7 +38,7 @@ export async function getTokenPriceAsUST(
       pairData.push(data)
     }
 
-    if (pairData[0] == undefined) {
+    if (pairData[0] === undefined) {
       return {
         price: '0',
         liquidity: '0',

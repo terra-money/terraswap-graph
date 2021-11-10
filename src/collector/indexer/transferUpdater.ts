@@ -85,8 +85,8 @@ export async function getLiquidityAsUST(
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
   //case1. uusd exist
-  if (tokenReserve.token0 == 'uusd' || tokenReserve.token1 == 'uusd') {
-    return tokenReserve.token0 == 'uusd'
+  if (tokenReserve.token0 === 'uusd' || tokenReserve.token1 === 'uusd') {
+    return tokenReserve.token0 === 'uusd'
       ? (Number(tokenReserve.token0Reserve) * 2).toString()
       : (Number(tokenReserve.token1Reserve) * 2).toString()
   }
@@ -112,12 +112,12 @@ export async function getLiquidityAsUST(
 
     const tokenPrice = await getTokenPriceAsUST(
       manager,
-      nativeTokenIndex == 0 ? tokenReserve.token0 : tokenReserve.token1,
+      nativeTokenIndex === 0 ? tokenReserve.token0 : tokenReserve.token1,
       new Date(timestamp),
       exchangeRate
     )
 
-    const reserve = nativeTokenIndex == 0 ? tokenReserve.token0Reserve : tokenReserve.token1Reserve
+    const reserve = nativeTokenIndex === 0 ? tokenReserve.token0Reserve : tokenReserve.token1Reserve
 
     return num(tokenPrice.price).multipliedBy(reserve).multipliedBy(2).toString()
   }

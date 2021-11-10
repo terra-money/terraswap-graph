@@ -39,7 +39,7 @@ export class PairDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairHistoricalData[]> {
-    const cycle = interval == Interval.DAY ? Cycle.DAY : Cycle.HOUR
+    const cycle = interval === Interval.DAY ? Cycle.DAY : Cycle.HOUR
     from = floorDate(from, cycle)
     to = floorDate(to, cycle)
     const decimalDiff = pairData.token0.decimals - pairData.token1.decimals

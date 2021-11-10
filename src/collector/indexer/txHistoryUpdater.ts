@@ -268,8 +268,8 @@ async function changeVolumeAsUST(
   exchangeRate: ExchangeRate | undefined
 ): Promise<string> {
   //case1. uusd exist
-  if (transformed.assets[0].token == 'uusd' || transformed.assets[1].token == 'uusd') {
-    return transformed.assets[0].token == 'uusd'
+  if (transformed.assets[0].token === 'uusd' || transformed.assets[1].token === 'uusd') {
+    return transformed.assets[0].token === 'uusd'
       ? Math.abs(Number(transformed.assets[0].amount)).toString()
       : Math.abs(Number(transformed.assets[1].amount)).toString()
   }
