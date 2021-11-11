@@ -10,4 +10,7 @@ export class Token {
 
   @Field((type) => [String], { nullable: true })
   includedPairs: string[]
+
+  @Field({ nullable: true })
+  decimals: number
 }

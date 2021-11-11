@@ -39,13 +39,14 @@ export class PairDataResolver {
     @Arg('from', { description: 'timestamp second' }) from: number,
     @Arg('to', { description: 'timestamp second' }) to: number
   ): Promise<PairHistoricalData[]> {
-    const cycle = interval == Interval.DAY ? Cycle.DAY : Cycle.HOUR
+    const cycle = interval === Interval.DAY ? Cycle.DAY : Cycle.HOUR
     from = floorDate(from, cycle)
     to = floorDate(to, cycle)
+    const decimalDiff = pairData.token0.decimals - pairData.token1.decimals
     
     rangeLimit(from, to, cycle, 500)
 
-    const data = await this.pairDataService.getHistoricalData(pairData.pairAddress, from, to, cycle)
+    const data = await this.pairDataService.getHistoricalData(pairData.pairAddress, from, to, cycle, decimalDiff)
     
     return data
   }

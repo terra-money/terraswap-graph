@@ -21,7 +21,7 @@ export function spwRule(): LogFinderRule {
       ['contract_address'],
       [
         'action',
-        (value) => value == 'swap' || value == 'provide_liquidity' || value == 'withdraw_liquidity',
+        (value) => value === 'swap' || value === 'provide_liquidity' || value === 'withdraw_liquidity',
       ],
     ],
     matchUntil: 'contract_address',
@@ -36,10 +36,10 @@ export function nonnativeTransferRule(): LogFinderRule {
       [
         'action',
         (value) =>
-          value == 'transfer' ||
-          value == 'send' ||
-          value == 'transfer_from' ||
-          value == 'send_from',
+          value === 'transfer' ||
+          value === 'send' ||
+          value === 'transfer_from' ||
+          value === 'send_from',
       ],
     ],
     matchUntil: 'contract_address',
@@ -51,7 +51,7 @@ export function nonnativeTransferRuleFrom(): LogFinderRule {
     type: 'wasm',
     attributes: [
       ['contract_address'],
-      ['action', (value) => value == 'transfer_from' || value == 'send_from'],
+      ['action', (value) => value === 'transfer_from' || value === 'send_from'],
       ['from'],
       ['to'],
       ['by'],

@@ -48,30 +48,35 @@ export class PairDataService {
     
     for (const pair of pairs){
       // if pair exist
-      if (pairsInfo.find((pairInfo) => pairInfo.pair == pair)) {
-        const pairInfo = pairsInfo.find((pairInfo) => pairInfo.pair == pair)
+      if (pairsInfo.find((pairInfo) => pairInfo.pair === pair)) {
+        const pairInfo = pairsInfo.find((pairInfo) => pairInfo.pair === pair)
 
-        const token0Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token0)
+        const token0Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress === pairInfo.token0)
         const token0: Token = {
           tokenAddress: pairInfo.token0,
           symbol: token0Info?.symbol,
           includedPairs: token0Info?.pairs,
+          decimals: token0Info?.decimals,
         }
 
-        const token1Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress == pairInfo.token1)
+        const token1Info = tokensInfo.find((tokenInfo) => tokenInfo.tokenAddress === pairInfo.token1)
         const token1: Token = {
           tokenAddress: pairInfo.token1,
           symbol: token1Info?.symbol,
           includedPairs: token1Info?.pairs,
+          decimals: token1Info?.decimals,
         }
+
+        // token0 decimal - token1 decimal
+        const decimalDiff = token0Info.decimals - token1Info.decimals
         
-        const pairLatest = pairsLatest.find((pairLatest) => pairLatest.pair == pair)
+        const pairLatest = pairsLatest.find((pairLatest) => pairLatest.pair === pair)
         result.push({
           pairAddress: pair,
           token0,
           token1,
-          latestToken0Price: pairLatest ? num(pairLatest.token1Reserve).div(pairLatest.token0Reserve).toFixed(10) : null,
-          latestToken1Price: pairLatest ? num(pairLatest.token0Reserve).div(pairLatest.token1Reserve).toFixed(10) : null,
+          latestToken0Price: pairLatest ? num(pairLatest.token1Reserve).div(pairLatest.token0Reserve).multipliedBy(10 ** decimalDiff).toFixed(10) : null,
+          latestToken1Price: pairLatest ? num(pairLatest.token0Reserve).div(pairLatest.token1Reserve).div(10 ** decimalDiff).toFixed(10) : null,
           latestLiquidityUST: pairLatest ? pairLatest.liquidityUst : null,
           lpTokenAddress: pairInfo?.lpToken
         })
@@ -114,13 +119,15 @@ export class PairDataService {
 
     const token0 = await this.tokenService.getToken(pairInfo.token0)
     const token1 = await this.tokenService.getToken(pairInfo.token1)
+
+    const decimalDiff = token0.decimals - token1.decimals
   
     return {
       pairAddress: pair,
       token0,
       token1,
-      latestToken0Price: latest ? num(latest.token1Reserve).div(latest.token0Reserve).toFixed(10) : null,
-      latestToken1Price: latest ? num(latest.token0Reserve).div(latest.token1Reserve).toFixed(10) : null,
+      latestToken0Price: latest ? num(latest.token1Reserve).div(latest.token0Reserve).multipliedBy(10 ** decimalDiff).toFixed(10) : null,
+      latestToken1Price: latest ? num(latest.token0Reserve).div(latest.token1Reserve).div(10 ** decimalDiff).toFixed(10) : null,
       latestLiquidityUST: latest ? latest.liquidityUst : null,
       lpTokenAddress: lpToken
     }
@@ -158,10 +165,11 @@ export class PairDataService {
     from: number,
     to: number,
     cycle: Cycle,
+    decimalDiff: number,
     dayRepo = this.dayRepo,
     hourRepo = this.hourRepo
   ): Promise<PairHistoricalData[]> {
-    const repo = cycle == Cycle.DAY ? dayRepo : hourRepo
+    const repo = cycle === Cycle.DAY ? dayRepo : hourRepo
     const fromDate = numberToDate(from + cycle / 1000, cycle)
     const toDate = numberToDate(to, cycle)
     let newFrom = await repo.findOne({
@@ -198,12 +206,12 @@ export class PairDataService {
         dateToNumber(tick.timestamp) <= indexTimestamp &&
         indexTimestamp >= dateToNumber(fromDate)
       ) {
-        const isSameTick = dateToNumber(tick.timestamp) == indexTimestamp
+        const isSameTick = dateToNumber(tick.timestamp) === indexTimestamp
 
         pairHistory.push({
           timestamp: indexTimestamp,
-          token0Price: num(tick.token1Reserve).div(tick.token0Reserve).toFixed(10),
-          token1Price: num(tick.token0Reserve).div(tick.token1Reserve).toFixed(10),
+          token0Price: num(tick.token1Reserve).div(tick.token0Reserve).multipliedBy(10 ** decimalDiff).toFixed(10),
+          token1Price: num(tick.token0Reserve).div(tick.token1Reserve).div(10 ** decimalDiff).toFixed(10),
           token0Volume: isSameTick ? tick.token0Volume : '0',
           token1Volume: isSameTick ? tick.token1Volume : '0',
           token0Reserve: tick.token0Reserve,

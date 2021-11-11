@@ -22,7 +22,7 @@ export async function collect(
 
   if (!latestBlock) return
 
-  if (chainId == 'columbus-4' && latestBlock > columbus4EndHeight){
+  if (chainId === 'columbus-4' && latestBlock > columbus4EndHeight){
     latestBlock = columbus4EndHeight
   }
 
@@ -31,7 +31,7 @@ export async function collect(
   const lastHeight = collectedBlock.height
 
 
-  if (chainId == 'columbus-4' || lastHeight < columbus4EndHeight){
+  if (chainId === 'columbus-4' || lastHeight < columbus4EndHeight){
     throw new Error (`this version is for the columbus-5, you have to collect columbus-4 data by using columbus-4 version of terraswap-graph first`)
   }
 
@@ -39,7 +39,7 @@ export async function collect(
   let exchangeRate = await getOracleExchangeRate(lastHeight - (lastHeight % 100))
 
   if (latestBlock === lastHeight) {
-    if (lastHeight == columbus4EndHeight) 
+    if (lastHeight === columbus4EndHeight) 
       throw new Error(`columbus-4 ended at height ${columbus4EndHeight}. Please change terraswap graph to the columbus-5 version`)
 
     await delay(500)
@@ -50,7 +50,7 @@ export async function collect(
     const block = await getBlock(height).catch(errorHandler)
     if (!block) return
 
-    if (height % 100 == 0){
+    if (height % 100 === 0){
       exchangeRate = await getOracleExchangeRate(height)
     }
 
@@ -64,7 +64,7 @@ export async function collect(
       }
       await delete24hData(manager, new Date().valueOf())
     })
-    if (height % 100 == 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
+    if (height % 100 === 0) logger.info(`collected: ${height} / latest height: ${latestBlock}`)
 
     await delay(100)
   }
