@@ -102,7 +102,7 @@ function isPairRelative(
   pairAddresses: Record<string, boolean>
 ): string[] | undefined {
   if (!pairAddresses) return
-  if (pairAddresses[transformed.addresses.from]) return ['from', transformed.addresses.from]
-  if (pairAddresses[transformed.addresses.to]) return ['to', transformed.addresses.to]
+  if (pairAddresses[transformed?.addresses?.from]) return ['from', transformed.addresses.from]
+  if (pairAddresses[transformed?.addresses?.to]) return ['to', transformed.addresses.to]
   return
 }

@@ -84,7 +84,7 @@ export const whiteList = {
     terra18wayjpyq28gd970qzgjfmsjj7dmgdk039duhph: 'mCOIN',
     terra19ya4jpvjvvtggepvmmj6ftmwly3p7way0tt08r: 'mDOT',
     terra1l5lrxtwd98ylfy09fn866au6dp76gu8ywnudls: 'mGLXY',
-    terra1a5cc08jt5knh0yx64pg6dtym4c4l8t63rhlag3: 'mARKK',
+    terra1qqfx5jph0rsmkur2zgzyqnfucra45rtjae5vh6: 'mARKK',
     terra18ej5nsuu867fkx4tuy2aglpvqjrkcrjjslap3z: 'mAMD',
     terra1u43zu5amjlsgty5j64445fr9yglhm53m576ugh: 'mSQ',
     terra18yqdfzfhnguerz9du5mnvxsh5kxlknqhcxzjfr: 'mHOOD',
