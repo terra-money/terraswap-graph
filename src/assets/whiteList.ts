@@ -49,6 +49,7 @@ export const whiteList = {
     terra1e59utusv5rspqsu8t37h5w887d9rdykljedxw0: 'VKR-UST',
     terra1z6tp0ruxvynsx5r9mmcc2wcezz9ey9pmrw5r8g: 'ORION-UST',
     terra170hht9lwe50ugfhnruzjaezpj29l7nvw3l6725: 'ORION-LUNA',
+    terra1jzqlw8mfau9ewr7lufqkrpgfzk4legz9zx306p: 'TLAND-UST',
   },
   token: {
     uusd: 'UST',
@@ -100,5 +101,6 @@ export const whiteList = {
     terra19djkaepjjswucys4npd5ltaxgsntl7jf0xz7w6: 'TWD',
     terra1dy9kmlm4anr92e42mrkjwzyvfqwz66un00rwr5: 'VKR',
     terra1mddcdx0ujx89f38gu7zspk2r2ffdl5enyz2u03: 'ORION',
+    terra1r5506ckw5tfr3z52jwlek8vg9sn3yflrqrzfsc: 'TLAND',
   }
 }
