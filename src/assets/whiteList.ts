@@ -49,6 +49,9 @@ export const whiteList = {
     terra1e59utusv5rspqsu8t37h5w887d9rdykljedxw0: 'VKR-UST',
     terra1z6tp0ruxvynsx5r9mmcc2wcezz9ey9pmrw5r8g: 'ORION-UST',
     terra170hht9lwe50ugfhnruzjaezpj29l7nvw3l6725: 'ORION-LUNA',
+    terra163pkeeuwxzr0yhndf8xd2jprm9hrtk59xf7nqf: 'Psi-UST',
+    terra1zvn8z6y8u2ndwvsjhtpsjsghk6pa6ugwzxp6vx: 'Psi-nLUNA',
+    terra14zhkur7l7ut7tx6kvj28fp5q982lrqns59mnp3: 'Psi-nETH'
   },
   token: {
     uusd: 'UST',
@@ -100,5 +103,8 @@ export const whiteList = {
     terra19djkaepjjswucys4npd5ltaxgsntl7jf0xz7w6: 'TWD',
     terra1dy9kmlm4anr92e42mrkjwzyvfqwz66un00rwr5: 'VKR',
     terra1mddcdx0ujx89f38gu7zspk2r2ffdl5enyz2u03: 'ORION',
+    terra12897djskt9rge8dtmm86w654g7kzckkd698608: 'Psi',
+    terra10f2mt82kjnkxqj2gepgwl637u2w4ue2z5nhz5j: 'nLUNA',
+    terra178v546c407pdnx5rer3hu8s2c0fc924k74ymnn: 'nETH'
   }
 }
