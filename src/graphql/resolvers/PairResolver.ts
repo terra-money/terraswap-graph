@@ -4,6 +4,7 @@ import { PairData, PairHistoricalData, Volume24h, Transaction } from 'graphql/sc
 import { PairDataService, Volume24hService } from 'services'
 import { Cycle, Interval } from 'types'
 import { floorDate, rangeLimit } from 'lib/utils'
+import { ResolverError } from 'lib/error'
 
 @Service()
 @Resolver((of) => PairData)
@@ -16,7 +17,7 @@ export class PairDataResolver {
   @Query((returns) => PairData)
   async pair(@Arg('pairAddress', (type) => String) pairAddress: string): Promise<Partial<PairData>> {
     const pair = await this.pairDataService.getPair(pairAddress)
-    if (!pair) throw new Error('pair is not exist')
+    if (!pair) throw new ResolverError('pair is not exist')
     return pair as PairData
   }
 
@@ -57,7 +58,7 @@ export class PairDataResolver {
     @Arg('limit') limit: number
   ): Promise<Transaction[]> {
     if (limit > 100) {
-      throw new Error('limit must lesser than or equal to 100')
+      throw new ResolverError('limit must lesser than or equal to 100')
     }
     return this.pairDataService.getTransactions(pairData.pairAddress, limit)
   }
