@@ -2,6 +2,7 @@ import { Arg, Query, Resolver } from 'type-graphql'
 import { Service } from 'typedi'
 import { Token } from 'graphql/schema'
 import { TokenService } from 'services'
+import { ParamsError } from 'lib/error'
 
 @Service()
 @Resolver((of) => Token)
@@ -11,7 +12,7 @@ export class TokenResolver {
   @Query((returns) => Token)
   async token(@Arg('tokenAddress', (type) => String) tokenAddress: string): Promise<Token> {
     const token = await this.tokenService.getToken(tokenAddress)
-    if (!token) throw new Error('token is not exist')
+    if (!token) throw new ParamsError('token is not exist')
     return token
   }
 
