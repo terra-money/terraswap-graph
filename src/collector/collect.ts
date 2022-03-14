@@ -11,6 +11,7 @@ import { updateTerraswapData } from './indexer/transferUpdater'
 
 const columbus4EndHeight = 4_724_000
 
+// chain id needed
 const chainId = process.env.TERRA_CHAIN_ID 
 
 export async function collect(
