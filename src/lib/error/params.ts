@@ -1,7 +1,7 @@
-export class ResolverError extends Error {
+export class ParamsError extends Error {
   constructor(message: string) {
     super(message)
-    this.name = 'ResolverError'
+    this.name = 'ParamsError'
     this.message = message
   }
 }

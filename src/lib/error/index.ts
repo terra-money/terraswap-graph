@@ -1,6 +1,6 @@
 import * as sentry from '@sentry/node'
 import * as logger from 'lib/logger'
-import { ResolverError } from '.'
+import { ParamsError } from '.'
 
 export function init(
   opts: {
@@ -27,12 +27,12 @@ export function init(
 export function errorHandler(error?: Error): void {
   if (error) {
     logger.error(error)
-    // do not send Resolver Error to sentry
-    if (!(error instanceof ResolverError)) {
+    // do not send Params Error to sentry
+    if (!(error instanceof ParamsError)) {
       sentry.captureException(error)
     }
   }
 }
 
 export * from './api'
-export * from './resolver'
+export * from './params'

@@ -1,5 +1,5 @@
 import { Cycle } from 'types'
-import { ResolverError } from '../lib/error'
+import { ParamsError } from '../lib/error'
 
 interface AssetInfo {
   token: string
@@ -74,5 +74,5 @@ export function compareLiquidity(liquidity0: string, liquidity1: string): boolea
 
 export function rangeLimit(from: number, to: number, cycle: Cycle, limit: number): void {
   if ((to - from) / (cycle / 1000) > limit)
-    throw new ResolverError(`max limit is '${limit}' set your range narrower or set larger interval`)
+    throw new ParamsError(`max limit is '${limit}' set your range narrower or set larger interval`)
 }
